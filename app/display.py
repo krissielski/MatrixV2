@@ -1,5 +1,12 @@
 # display.by
 # Basic control functions for the display
+# 
+#  (0,0)
+#       *-----> +X 
+#       |    
+#       |
+#    +Y |
+#
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 class Display:
@@ -16,7 +23,7 @@ class Display:
         self.height = self.canvas.height
 
         #Overlay settings
-        self.overlay_type  = 0          #0=subtractive, 1=additive    
+        self.overlay_type  = 1          #0=subtractive, 1=additive    
         self.overlay_color = (0,0,0)
         self.overlay = [[0 for _ in range(self.width)] for _ in range(self.height)]
 
@@ -41,7 +48,7 @@ class Display:
         r, g, b = color
         for y in range(-radius, radius + 1):
             for x in range(-radius, radius + 1):
-                if x*x + y*y <= radius*radius:
+                if x*x + y*y < radius*radius:
                     px, py = cx + x, cy + y
                     if 0 <= px < self.width and 0 <= py < self.height:
                         self.canvas.SetPixel(px, py, r, g, b)
@@ -62,7 +69,7 @@ class Display:
     def overlay_circle(self, cx, cy, radius):
         for y in range(-radius, radius + 1):
             for x in range(-radius, radius + 1):
-                if x*x + y*y <= radius*radius:
+                if x*x + y*y < radius*radius:
                     px, py = cx + x, cy + y
                     if 0 <= px < self.width and 0 <= py < self.height:
                         self.overlay[py][px] = 1
@@ -92,4 +99,4 @@ class Display:
     # Draw overlay on canvas then write to display
     def show(self):
         self.overlay_render()
-        self.matrix.SwapOnVSync(self.canvas)
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
