@@ -1,0 +1,95 @@
+# display.by
+# Basic control functions for the display
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
+
+class Display:
+    def __init__(self):
+        options = RGBMatrixOptions()
+        options.rows = 64
+        options.cols = 64
+        options.chain_length = 1
+        options.parallel = 1
+
+        self.matrix = RGBMatrix(options=options)
+        self.canvas = self.matrix.CreateFrameCanvas()
+        self.width = self.canvas.width
+        self.height = self.canvas.height
+
+        #Overlay settings
+        self.overlay_type  = 0          #0=subtractive, 1=additive    
+        self.overlay_color = (0,0,0)
+        self.overlay = [[0 for _ in range(self.width)] for _ in range(self.height)]
+
+    # ---- Base drawing ----
+    def background(self, color=(0, 0, 0)):
+        r, g, b = color
+        for x in range(self.width):
+            for y in range(self.height):
+                self.canvas.SetPixel(x, y, r, g, b)
+
+    def clear(self):
+        self.background( (0,0,0) )          
+
+    def draw_square(self, x, y, size, color):
+        r, g, b = color
+        for yy in range(y, y + size):
+            for xx in range(x, x + size):
+                if 0 <= xx < self.width and 0 <= yy < self.height:
+                    self.canvas.SetPixel(xx, yy, r, g, b)
+
+    def draw_circle(self, cx, cy, radius, color):
+        r, g, b = color
+        for y in range(-radius, radius + 1):
+            for x in range(-radius, radius + 1):
+                if x*x + y*y <= radius*radius:
+                    px, py = cx + x, cy + y
+                    if 0 <= px < self.width and 0 <= py < self.height:
+                        self.canvas.SetPixel(px, py, r, g, b)
+
+
+
+    # ---- Overlay drawing ----
+    def overlay_set_color(self, color):
+        self.overlay_color = color
+
+    def overlay_set_type(self, overlay_type):
+        self.overlay_type = overlay_type
+    
+    def overlay_set_pixel(self, x, y):
+        if 0 <= x < self.width and 0 <= y < self.height:
+            self.overlay[y][x] = 1
+
+    def overlay_circle(self, cx, cy, radius):
+        for y in range(-radius, radius + 1):
+            for x in range(-radius, radius + 1):
+                if x*x + y*y <= radius*radius:
+                    px, py = cx + x, cy + y
+                    if 0 <= px < self.width and 0 <= py < self.height:
+                        self.overlay[py][px] = 1
+
+    def overlay_square(self, x, y, size):
+        for yy in range(y, y + size):
+            for xx in range(x, x + size):
+                if 0 <= xx < self.width and 0 <= yy < self.height:
+                    self.overlay[yy][xx] = 1
+
+    def overlay_render(self):
+        r, g, b = self.overlay_color
+        for y in range(self.height):
+            for x in range(self.width):
+
+                if self.overlay[y][x]:
+                    if self.overlay_type == 1:
+                        #Additive
+                        self.canvas.SetPixel(x, y, r, g, b)
+                else:
+                    if self.overlay_type == 0:
+                        #subtractive
+                        self.canvas.SetPixel(x, y, r, g, b)         
+
+
+
+    # Draw overlay on canvas then write to display
+    def show(self):
+        self.overlay_render()
+        self.matrix.SwapOnVSync(self.canvas)
