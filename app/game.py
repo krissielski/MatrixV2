@@ -17,7 +17,7 @@ FALL_DELAY  = 0.005
 
 def RunGame( disp ):
 
-    disp.overlay_set_color((0,0,110))
+    disp.overlay_set_color((0,0,100))
     disp.overlay_set_type(0)
 
     #Generate overlay:
@@ -30,16 +30,26 @@ def RunGame( disp ):
             disp.overlay_circle(x, y, CHIP_RADIUS)
 
 
+    turn = 0
+
     while True:
         col = random.randint(0, 6)
-        print("Col= ",col)
-        DropChip(disp,col,5)
+
+        if turn == 0:
+            chip_color = (150,0,0)
+            turn = 1
+        else:
+            chip_color = (150,150,0)
+            turn = 0
+        
+
+        DropChip(disp,col,5,chip_color)
         time.sleep(1)
 
 # End RunGame
 
 
-def DropChip( disp, final_col, final_row ):
+def DropChip( disp, final_col, final_row, color ):
 
     #sanity check
     if final_col < 0 or final_col >= NUMCOLS:
@@ -58,7 +68,7 @@ def DropChip( disp, final_col, final_row ):
 
         disp.clear()
 
-        disp.draw_circle(x,y,CHIP_RADIUS, (150,0,0) )
+        disp.draw_circle(x,y,CHIP_RADIUS, color )
 
         y = y+1
         disp.show()
