@@ -4,7 +4,6 @@ import time
 import random
 
 
-
 NUMROWS     = 6
 NUMCOLS     = 7
 
@@ -28,6 +27,10 @@ FALL_DELAY  = 0.005
 #
 game_board = [[None for _ in range(NUMROWS)] for _ in range(NUMCOLS)]
 
+
+#player colors    RED        YELLOW
+player_color = [(175,0,0), (175,175,0)]
+
 def RunGame( disp ):
 
     disp.overlay_set_color((0,0,100))
@@ -44,41 +47,50 @@ def RunGame( disp ):
 
             disp.overlay_circle(x, y, CHIP_RADIUS)
 
-
-    turn = 0
+    #Player 0 (RED), player 1 (Yellow)
+    player = 0
 
     while True:
-        col = random.randint(0, 6)
 
-        if turn == 0:
-            chip_color = (150,0,0)
-        else:
-            chip_color = (150,150,0)
-        
-        row = GetFirstOpenRow(col)
-        if( row == None ):
-            exit()
+        #Check for Draw
+        if CheckForDraw():
+            print("   DRAW!!!!!!!!!!!")
+            time.sleep(5)
+            exit()            
 
- 
-        DropChip(disp,col,row,chip_color)
-
-        PlaceChip(col,row,turn)
+        # Randomly pick columns until a row is found
+        row = None
+        while row is None:
+            col = random.randint(0, 6)
+            row = GetFirstOpenRow(col)
 
 
-        print()
-        print("> ",col,row)
-        print(game_board)
+        DropChip(disp,col,row, player_color[player] )
 
+        PlaceChip(col,row,player)
 
-        time.sleep(1)
+        time.sleep(2)
+
+        winner = CheckForWinner(col,row,player)
+        if winner is not None:
+            print("Winner!!!", col, row)
+            print(winner)
+
+            #delay and reset
+            time.sleep(5)
+            player = 0
+            # Clear the game board
+            for col in range(NUMCOLS):
+                for row in range(NUMROWS):
+                    game_board[col][row] = None
 
 
         #Prepare for NEXT turn
 
-        if turn == 0:
-            turn = 1
+        if player == 0:
+            player = 1
         else:
-            turn = 0
+            player = 0
 
 # End RunGame
 
@@ -112,9 +124,9 @@ def DropChip( disp, final_col, final_row, color ):
 #end DropChip
 
 
-def PlaceChip( col, row, value ):
+def PlaceChip( col, row, player ):
     if 0 <= row < NUMROWS and 0 <= col < NUMCOLS:
-        game_board[col][row] = value
+        game_board[col][row] = player
     else:
         raise IndexError("Row or column out of range")
 
@@ -124,34 +136,87 @@ def ReadChip( col, row ):
     else:
         raise IndexError("Row or column out of range")
 
-#return (row,value) or None if FULL
+#return row or None if FULL
 def GetFirstOpenRow( col ):
     if 0 <= col < NUMCOLS:
         for row in range(NUMROWS):
-            value = game_board[col][row]
-            if value is None:
+            if game_board[col][row] is None:
                 return row
         return None
     else:
         raise IndexError("Column out of range")
 
+
 def DrawChips(disp):
     for row in range(NUMROWS):
         for col in range(NUMCOLS):
 
-            value = game_board[col][row]
+            player = game_board[col][row]
 
-            if ( value is not None ):
-
-                if value == 0:
-                    color = (200,0,0)
-                if value == 1:
-                    color = (200,200,0)
+            if ( player is not None ):
 
                 x = STARTING_X + col * CHIP_OFFSET
 
                 y = STARTING_Y + (NUMROWS-1 - row) * CHIP_OFFSET
 
-                disp.draw_circle(x,y,CHIP_RADIUS, color )
+                disp.draw_circle(x,y,CHIP_RADIUS, player_color[player] )
 
 #END DrawChips
+
+#-----------------------------------------------------------------
+#
+
+#returns a list of winning positions, or None if no winner found
+def CheckForWinner(col, row, player):
+    
+    # Validate input parameters
+    if not (0 <= col < NUMCOLS and 0 <= row < NUMROWS):
+        raise IndexError("Invalid board position")
+    
+    # Check if the position actually contains the player's chip
+    if ReadChip(col, row) != player:
+        return None
+    
+    # Check all four directions for 4-in-a-row
+    directions = [
+        (0, 1),   # Horizontal
+        (1, 0),   # Vertical  
+        (1, 1),   # Diagonal (bottom-left to top-right)
+        (1, -1)   # Diagonal (top-left to bottom-right)
+    ]
+    
+    for dx, dy in directions:
+
+        count = 1                   # Count the chip at the starting position
+        positions = [(col,row)]     # Include the starting position
+        
+        # Check in positive direction
+        c, r = col + dx, row + dy
+        while (0 <= c < NUMCOLS and 0 <= r < NUMROWS and ReadChip(c, r) == player):
+            positions.append( (c,r) )
+            count += 1
+            c += dx
+            r += dy
+        
+        # Check in negative direction  
+        c, r = col - dx, row - dy
+        while (0 <= c < NUMCOLS and 0 <= r < NUMROWS and ReadChip(c, r) == player):
+            positions.append( (c,r) )
+            count += 1
+            c -= dx
+            r -= dy
+        
+        #Check for at least 4 in a row
+        if len(positions) >= 4:
+            return positions
+    
+    #Nope, none found
+    return None
+
+
+def CheckForDraw():
+    for col in range(NUMCOLS):
+        if GetFirstOpenRow(col) is not None:
+            return False
+    return True
+
