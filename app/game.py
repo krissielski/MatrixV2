@@ -76,8 +76,12 @@ def RunGame( disp ):
             print("Winner!!!", col, row)
             print(winner)
 
-            #delay and reset
+            BlinkWinningChips(disp,winner,player)
+
+            # Hold winning chips for a bit
             time.sleep(5)
+
+            # Reset for next game
             player = 0
             # Clear the game board
             for col in range(NUMCOLS):
@@ -220,3 +224,41 @@ def CheckForDraw():
             return False
     return True
 
+
+
+def BlinkWinningChips(disp, winning_positions, player):
+    
+    BLINK_COUNT = 3
+    BLINK_DELAY = 0.3
+
+    BRIGHT_GAIN = 1.4    
+    DIM_GAIN    = 0.6  
+
+
+    if not winning_positions:
+        return
+    
+    # Get the base color for this player
+    base_color = player_color[player]
+    
+    for blink in range(BLINK_COUNT):
+        
+        # Flash bright, then dim
+        for gain in [DIM_GAIN, BRIGHT_GAIN ]:
+            
+            # Calculate adjusted color with gain multiplier
+            adjusted_color = tuple(min(255, int(c * gain)) for c in base_color)
+            
+            disp.clear()
+            
+            DrawChips(disp)
+            
+            # Draw winning chips with adjusted color
+            for col, row in winning_positions:
+                x = STARTING_X + col * CHIP_OFFSET
+                y = STARTING_Y + (NUMROWS-1 - row) * CHIP_OFFSET
+                disp.draw_circle(x, y, CHIP_RADIUS, adjusted_color)
+            
+            disp.show()
+            time.sleep(BLINK_DELAY)
+#End BlinkWinningChips   
