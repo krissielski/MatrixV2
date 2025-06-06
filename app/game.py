@@ -50,19 +50,12 @@ def RunGame( disp ):
     #Player 0 (RED), player 1 (Yellow)
     player = 0
 
+    select_mode = [0,0]
+
     while True:
 
-        #Check for Draw
-        if CheckForDraw():
-            print("   DRAW!!!!!!!!!!!")
-            time.sleep(5)
-            exit()            
-
-        # Randomly pick columns until a row is found
-        row = None
-        while row is None:
-            col = random.randint(0, 6)
-            row = GetFirstOpenRow(col)
+        # Get Next move
+        col,row = GetNextMove( select_mode[player], player )
 
 
         DropChip(disp,col,row, player_color[player] )
@@ -71,6 +64,15 @@ def RunGame( disp ):
 
         time.sleep(2)
 
+
+        # Check for Draw
+        if CheckForDraw():
+            print("   DRAW!!!!!!!!!!!")
+            time.sleep(5)
+            exit()   
+
+
+        # Check for Winner
         winner = CheckForWinner(col,row,player)
         if winner is not None:
             print("Winner!!!", col, row)
@@ -87,6 +89,8 @@ def RunGame( disp ):
             for col in range(NUMCOLS):
                 for row in range(NUMROWS):
                     game_board[col][row] = None
+
+            continue
 
 
         #Prepare for NEXT turn
@@ -262,3 +266,60 @@ def BlinkWinningChips(disp, winning_positions, player):
             disp.show()
             time.sleep(BLINK_DELAY)
 #End BlinkWinningChips   
+
+
+
+def GetNextMove(mode, player):
+
+
+    player_name = "Red" if player == 0 else "Yellow"
+
+
+    #--------------------------------------------------------------------
+    # Random selection mode - keep trying until valid column found
+    if mode == 0:
+
+        while True:
+            col = random.randint(0, 6)
+            row = GetFirstOpenRow(col)
+            if row is not None:
+                return (col,row)
+
+    #--------------------------------------------------------------------
+    # User input mode                
+    elif mode == 1:
+
+        while True:
+            try:
+                # Get user input (1-7, convert to 0-6)
+                user_input = input(f"{player_name} player, enter column (1-7): ")
+                
+                # Convert to integer
+                col_input = int(user_input)
+                
+                # Validate range (user enters 1-7, we use 0-6)
+                if col_input < 1 or col_input > 7:
+                    print("Invalid column! Please enter a number between 1 and 7.")
+                    continue
+                
+                # Convert to 0-based index
+                col = col_input - 1
+                
+                # Check if column has space
+                row = GetFirstOpenRow(col)
+                if row is None:
+                    print(f"Column {col_input} is full! Please choose another column.")
+                    continue
+                
+                # Valid move found
+                return  (col,row)
+                
+            except ValueError:
+                print("Invalid input! Please enter a number between 1 and 7.")
+                continue
+    
+    else:
+        raise ValueError(f"Invalid mode: {mode}. Use 0 for random, 1 for user input.")
+#GetNextMove
+
+
