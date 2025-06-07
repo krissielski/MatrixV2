@@ -7,7 +7,7 @@
 #       |
 #    +Y |
 #
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
 class Display:
     def __init__(self):
@@ -22,10 +22,21 @@ class Display:
         self.width = self.canvas.width
         self.height = self.canvas.height
 
+        self.font = graphics.Font()
+        # self.font.LoadFont("fonts/5x7.bdf")
+        self.font.LoadFont("fonts/5x8.bdf")
+        # self.font.LoadFont("fonts/4x6.bdf")
+
         #Overlay settings
         self.overlay_type  = 1          #0=subtractive, 1=additive    
         self.overlay_color = (0,0,0)
         self.overlay = [[0 for _ in range(self.width)] for _ in range(self.height)]
+
+        #Text
+        self.font_color = graphics.Color(0, 0, 0)
+        self.font_pos   = (0,0)
+        self.font_text  = ""
+
 
     # ---- Base drawing ----
     def background(self, color=(0, 0, 0)):
@@ -44,6 +55,13 @@ class Display:
                 if 0 <= xx < self.width and 0 <= yy < self.height:
                     self.canvas.SetPixel(xx, yy, r, g, b)
 
+    def draw_rectangle(self, x, y, width, height, color):
+        r, g, b = color
+        for yy in range(y, y + height):
+            for xx in range(x, x + width):
+                if 0 <= xx < self.width and 0 <= yy < self.height:
+                    self.canvas.SetPixel(xx, yy, r, g, b)
+
     def draw_circle(self, cx, cy, radius, color):
         r, g, b = color
         for y in range(-radius, radius + 1):
@@ -52,7 +70,17 @@ class Display:
                     px, py = cx + x, cy + y
                     if 0 <= px < self.width and 0 <= py < self.height:
                         self.canvas.SetPixel(px, py, r, g, b)
+    
+    # ---- Text ----
+    def text_set(self,x,y,color,text):
+        r, g, b = color
+        self.font_pos   = (x,y)
+        self.font_color = graphics.Color(r,g,b)
+        self.font_text  = text
 
+    def text_render(self):
+        x,y = self.font_pos
+        graphics.DrawText(self.canvas, self.font, x,y, self.font_color, self.font_text)
 
 
     # ---- Overlay drawing ----
@@ -80,6 +108,12 @@ class Display:
                 if 0 <= xx < self.width and 0 <= yy < self.height:
                     self.overlay[yy][xx] = 1
 
+    def overlay_rectangle(self, x, y, width, height):
+        for yy in range(y, y + height):
+            for xx in range(x, x + width):
+                if 0 <= xx < self.width and 0 <= yy < self.height:
+                    self.overlay[yy][xx] = 1
+
     def overlay_render(self):
         r, g, b = self.overlay_color
         for y in range(self.height):
@@ -99,4 +133,5 @@ class Display:
     # Draw overlay on canvas then write to display
     def show(self):
         self.overlay_render()
+        self.text_render()
         self.canvas = self.matrix.SwapOnVSync(self.canvas)

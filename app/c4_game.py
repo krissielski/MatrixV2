@@ -28,22 +28,15 @@ game_board = [[None for _ in range(NUMROWS)] for _ in range(NUMCOLS)]
 
 #player colors    RED        YELLOW
 player_color = [(175,0,0), (175,175,0)]
+player_name  = ["Player 1","Player 2"]
 
 def RunGame( disp ):
 
-    disp.overlay_set_color((0,0,100))
-    disp.overlay_set_type(0)
-
     random.seed(time.time())
 
-    #Generate overlay:
-    for c in range (NUMCOLS):
-        for r in range (NUMROWS):
+    GenerateOverlay(disp)
 
-            x = STARTING_X + c * CHIP_OFFSET
-            y = STARTING_Y + r * CHIP_OFFSET
 
-            disp.overlay_circle(x, y, CHIP_RADIUS)
 
     #Player 0 (RED), player 1 (Yellow)
     player = 0
@@ -51,6 +44,13 @@ def RunGame( disp ):
     select_mode = [0,0]
 
     while True:
+
+        #Set bottom text
+        disp.text_set(5,63,player_color[player],player_name[player])
+
+        RefreshDisplay(disp)
+        time.sleep(2)
+
 
         # Get Next move
         col,row = GetNextMove( select_mode[player], player )
@@ -69,14 +69,14 @@ def RunGame( disp ):
 
 
         # Check for Draw
-        if CheckForDraw():
+        if CheckForDraw(game_board):
             print("   DRAW!!!!!!!!!!!")
             time.sleep(5)
             exit()   
 
 
         # Check for Winner
-        winner = CheckForWinner(col,row,player)
+        winner = CheckForWinner(game_board,col,row,player)
         if winner is not None:
             print("Winner!!!", col, row)
             print(winner)
@@ -104,6 +104,36 @@ def RunGame( disp ):
             player = 0
 
 # End RunGame
+
+
+#Generate the Connect4 overlay layer
+def GenerateOverlay(disp):
+    disp.overlay_set_color((0,0,100))
+
+    #Type 0 = Subtractive (making holes in top layer)
+    # Wwhatever is drawn will then become transparent
+    disp.overlay_set_type(0)      
+
+    # Make holes in overlay layer
+    for c in range (NUMCOLS):
+        for r in range (NUMROWS):
+
+            x = STARTING_X + c * CHIP_OFFSET
+            y = STARTING_Y + r * CHIP_OFFSET
+            disp.overlay_circle(x, y, CHIP_RADIUS)  
+
+    #Remove bottom 
+    HEIGHT = 8
+    x = 0
+    y = disp.width-HEIGHT
+    w = disp.width
+    h = HEIGHT
+
+    disp.overlay_rectangle(x,y,w,h)
+
+#end GenerateOverlay
+
+
 
 
 def DropChip( disp, final_col, final_row, color ):
@@ -158,6 +188,11 @@ def DrawChips(disp):
 
 #END DrawChips
 
+#Refresh display
+def RefreshDisplay(disp):
+    disp.clear()          
+    DrawChips(disp) 
+    disp.show()
 
 
 def BlinkWinningChips(disp, winning_positions, player):
@@ -211,7 +246,7 @@ def GetNextMove(mode, player):
 
         while True:
             col = random.randint(0, 6)
-            row = GetFirstOpenRow(col)
+            row = GetFirstOpenRow(game_board,col)
             if row is not None:
                 return (col,row)
 
@@ -236,7 +271,7 @@ def GetNextMove(mode, player):
                 col = col_input - 1
                 
                 # Check if column has space
-                row = GetFirstOpenRow(col)
+                row = GetFirstOpenRow(game_board,col)
                 if row is None:
                     print(f"Column {col_input} is full! Please choose another column.")
                     continue
