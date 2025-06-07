@@ -1,5 +1,5 @@
 from display import Display
-from game import RunGame
+from c4_game import RunGame
 import time
 
 disp = Display()
