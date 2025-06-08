@@ -6,6 +6,7 @@ PIECES: X=Player1, O=Player2, empty=Empty Cell
 WIN: Connect 4 pieces in a line (vertical, horizontal, or diagonal)
 GRAVITY: Pieces fall to the lowest empty row in a column (Row1 is the lowest Row (bottom))
 GOAL:  Primary goal is to win by making 4 pieces in a row.  Secondary goal is to prevent opponent from winning.
+CURRENT PLAYER: ?
 
 TASK: Analyze the board to deturmine next strategic to ensure winning the game.
 

@@ -1,15 +1,27 @@
 import requests
 import json
+import re
 from c4_common import NUMROWS, NUMCOLS
 
 # Configuration constants
-OLLAMA_MODEL       = 'llama3.2'
-OLLAMA_MODEL       = 'llama3'
+OLLAMA_MODEL       = 'llama3.2:3b'
+#OLLAMA_MODEL       = 'llama3'
+#OLLAMA_MODEL       = 'phi4:14b'
+
+
 
 OLLAMA_HOST        = 'http://192.168.3.50:11434'
 OLLAMA_PROMPT_FILE = 'c4_ollama_prompt.txt'
 
-OLLAMA_TIMEOUT     = (5*60)      #Request Timeout (seconds)      
+OLLAMA_TIMEOUT     = (15*60)      #Request Timeout (seconds)      
+
+
+# AI generation parameters
+OLLAMA_TEMPERATURE = 0.1    # Controls randomness (0.0 = very deterministic, 1.0 = very random)
+OLLAMA_TOP_P = 0.9          # Nucleus sampling parameter (controls diversity)
+OLLAMA_TOP_K = 10           # Limits the number of highest probability tokens to consider
+
+
 
 def GetOllamaMove(game_board, current_player):
 
@@ -82,7 +94,7 @@ def generate_prompt(game_board, current_player):
     
     # Update current player in the prompt if it contains the placeholder
     current_player_symbol = "X" if current_player == 0 else "O"
-    prompt = prompt.replace("CURRENT PLAYER: X to make a next move", 
+    prompt = prompt.replace("CURRENT PLAYER: ?", 
                            f"CURRENT PLAYER: {current_player_symbol} to make a next move")
     
     return prompt
@@ -97,9 +109,9 @@ def call_ollama_api(prompt):
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.1,  # Lower temperature for more deterministic responses
-            "top_p": 0.9,
-            "top_k": 10
+            "temperature": OLLAMA_TEMPERATURE,
+            "top_p": OLLAMA_TOP_P,
+            "top_k": OLLAMA_TOP_K
         }
     }
     
@@ -112,6 +124,15 @@ def call_ollama_api(prompt):
         response.raise_for_status()
         
         result = response.json()
+
+        # print("-------------------")
+        # print("Ollama Full Response:", result)
+        # print()
+        print("Ollama Model:    ",OLLAMA_MODEL)
+        print("Ollama Duration: ",result.get("total_duration", "")/1000000000)
+        print("Ollama Response: ",result.get("response", "").strip())
+        # print("-------------------")
+
         return result.get("response", "").strip()
         
     except requests.exceptions.RequestException as e:
@@ -121,35 +142,18 @@ def call_ollama_api(prompt):
 
 
 def parse_ai_response(response):
- 
-    # Clean up the response
-    response = response.strip()
-    
-    # Try to extract number from response
-    import re
-    
-    # Look for single digit 1-7
-    numbers = re.findall(r'\b[1-7]\b', response)
+
+    # Find all numbers 1-7 in the response
+    numbers = re.findall(r'[1-7]', response)
     
     if numbers:
-        # Take the first valid number found
-        column_1_based = int(numbers[0])
-        # Convert to 0-based index
-        column = column_1_based - 1
-        
-        if 0 <= column <= 6:
-            return column
+        # Take the last valid number found and convert to 0-based index
+        column_1_based = int(numbers[-1])
+        return column_1_based - 1
     
-    # If no valid number found, try to parse the entire response as a number
-    try:
-        column_1_based = int(response)
-        if 1 <= column_1_based <= 7:
-            return column_1_based - 1
-    except ValueError:
-        pass
-    
-    # If we can't parse a valid column, raise an exception
-    raise ValueError(f"Could not parse valid column from AI response: '{response}'")
+    # If no valid column found, raise an exception
+    raise ValueError(f"Could not find valid column [1-7] in AI response: '{response}'")
+
 
 
 def test_connection():

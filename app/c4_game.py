@@ -4,6 +4,9 @@ import time
 import random
 
 from c4_common import NUMROWS,NUMCOLS,GetFirstOpenRow,CheckForWinner,CheckForDraw,CheckForValidMove
+from c4_ollama import GetOllamaMove
+
+
 
 CHIP_RADIUS = 4
 STARTING_X  = 4
@@ -28,7 +31,9 @@ game_board = [[None for _ in range(NUMROWS)] for _ in range(NUMCOLS)]
 
 #player colors    RED        YELLOW
 player_color = [(175,0,0), (175,175,0)]
-player_name  = ["Player 1","Player 2"]
+
+#Mode:              0       1      2
+player_name  = ["Random","User","Ollama"]
 
 def RunGame( disp ):
 
@@ -40,13 +45,16 @@ def RunGame( disp ):
 
     #Player 0 (RED), player 1 (Yellow)
     player = 0
-
+    turn   = 1
     select_mode = [0,0]
 
     while True:
 
+        print("---------------------------")
+        print("Turn:", turn, "   Side:", player, "  Name:", player_name[select_mode[player]])
+
         #Set bottom text
-        disp.text_set(5,63,player_color[player],player_name[player])
+        disp.text_set(5,63,player_color[player],  player_name[select_mode[player]])
 
         RefreshDisplay(disp)
         time.sleep(2)
@@ -86,6 +94,9 @@ def RunGame( disp ):
             # Hold winning chips for a bit
             time.sleep(5)
 
+            # For now...
+            quit()
+
             # Reset for next game
             player = 0
             # Clear the game board
@@ -97,11 +108,12 @@ def RunGame( disp ):
 
 
         #Prepare for NEXT turn
-
         if player == 0:
             player = 1
         else:
             player = 0
+
+        turn += 1            
 
 # End RunGame
 
@@ -282,7 +294,42 @@ def GetNextMove(mode, player):
             except ValueError:
                 print("Invalid input! Please enter a number between 1 and 7.")
                 continue
-    
+
+
+    #--------------------------------------------------------------------
+    # Ollama AI mode
+    elif mode == 2:
+         
+        print(f"AI ({player_name}) is thinking...")
+        
+        try:
+            col = GetOllamaMove(game_board, player)
+            row = GetFirstOpenRow(game_board, col)
+            
+            if row is not None:
+                print(f"AI chose column {col + 1}")
+                return (col, row)
+            else:
+                # If AI chose invalid column, fall back to random
+                print(f"AI chose invalid column {col + 1}, falling back to random...")
+                while True:
+                    col = random.randint(0, 6)
+                    row = GetFirstOpenRow(game_board,col)
+                    if row is not None:
+                        return (col,row)
+                        
+        except Exception as e:
+            print(f"AI error: {e}, falling back to random...")
+            # Fall back to random move if AI fails
+            while True:
+                col = random.randint(0, 6)
+                row = GetFirstOpenRow(game_board,col)
+                if row is not None:
+                    return (col,row)
+
+
+
+
     else:
         raise ValueError(f"Invalid mode: {mode}. Use 0 for random, 1 for user input.")
 #GetNextMove
