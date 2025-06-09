@@ -30,7 +30,7 @@ game_board = [[None for _ in range(NUMROWS)] for _ in range(NUMCOLS)]
 
 
 #player colors    RED        YELLOW
-player_color = [(175,0,0), (175,175,0)]
+player_color = [(175,0,0), (125,125,0)]
 
 #Mode:              0       1      2
 player_name  = ["Random","User","Ollama"]
@@ -46,11 +46,11 @@ def RunGame( disp ):
     #Player 0 (RED), player 1 (Yellow)
     player = 0
     turn   = 1
-    select_mode = [0,0]
+    select_mode = [0,2]
 
     while True:
 
-        print("---------------------------")
+        print("--------------------------------------------")
         print("Turn:", turn, "   Side:", player, "  Name:", player_name[select_mode[player]])
 
         #Set bottom text
@@ -80,7 +80,11 @@ def RunGame( disp ):
         if CheckForDraw(game_board):
             print("   DRAW!!!!!!!!!!!")
             time.sleep(5)
-            exit()   
+
+            #Stall for now
+            while True:
+                time.sleep(1)
+ 
 
 
         # Check for Winner
@@ -94,8 +98,9 @@ def RunGame( disp ):
             # Hold winning chips for a bit
             time.sleep(5)
 
-            # For now...
-            quit()
+            #Stall for now
+            while True:
+                time.sleep(1)
 
             # Reset for next game
             player = 0

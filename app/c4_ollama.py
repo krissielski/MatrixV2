@@ -4,8 +4,8 @@ import re
 from c4_common import NUMROWS, NUMCOLS
 
 # Configuration constants
-OLLAMA_MODEL       = 'llama3.2:3b'
-#OLLAMA_MODEL       = 'llama3'
+#OLLAMA_MODEL       = 'llama3.2:3b'
+OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
 
 
@@ -59,24 +59,8 @@ def generate_prompt(game_board, current_player):
         print(f"Error reading prompt file: {e}")
         raise
     
-    # Replace the board state section with current game state
-    prompt_lines = base_prompt.split('\n')
-    
-    # Find where to insert the board state (after "BOARD STATE BY COLUMN")
-    board_start_index = -1
-    for i, line in enumerate(prompt_lines):
-        if "BOARD STATE BY COLUMN" in line:
-            board_start_index = i + 1
-            break
-    
-    if board_start_index == -1:
-        # If we can't find the marker, just append to the end
-        prompt = base_prompt + "\n\nBOARD STATE BY COLUMN (bottom to top):\n"
-    else:
-        # Keep everything up to the board state marker
-        prompt = '\n'.join(prompt_lines[:board_start_index]) + '\n'
-    
-    # Generate current board state for each column
+    # Generate current board state text separately
+    board_state = ""
     for col in range(NUMCOLS):
         column_state = f"Column {col + 1}: "
         
@@ -90,14 +74,25 @@ def generate_prompt(game_board, current_player):
                 row_states.append(f"Row{row + 1}=O")
         
         column_state += ", ".join(row_states)
-        prompt += column_state + "\n"
+        board_state += column_state + "\n"
     
-    # Update current player in the prompt if it contains the placeholder
+    # # Debug print for board state
+    # print("Generated board state for AI:")
+    # print(board_state)
+    
+    # Update current player in base prompt
     current_player_symbol = "X" if current_player == 0 else "O"
-    prompt = prompt.replace("CURRENT PLAYER: ?", 
-                           f"CURRENT PLAYER: {current_player_symbol} to make a next move")
+    base_prompt = base_prompt.replace("?", f"{current_player_symbol}")
     
-    return prompt
+    # Combine base prompt with board state
+    final_prompt = base_prompt + "\n" + board_state
+
+    # # Debug print for board state
+    # print("Generated prompt AI:")
+    # print(final_prompt)
+    
+    return final_prompt
+
 
 
 def call_ollama_api(prompt):

@@ -1,15 +1,13 @@
-Please analyze this Connect-4 game state:
+You are playing the game Connect-4. Below is the current game state:
 
 ROWS: 6 rows (1-6).  Row6 is the top and Row1 is the bottom.
 COLUMNS: 7 columns (1-7)
 PIECES: X=Player1, O=Player2, empty=Empty Cell
-WIN: Connect 4 pieces in a line (vertical, horizontal, or diagonal)
+OBJECTIVE: Win by connecting 4 pieces in a consecutive line (vertical, horizontal, or diagonal)
 GRAVITY: Pieces fall to the lowest empty row in a column (Row1 is the lowest Row (bottom))
-GOAL:  Primary goal is to win by making 4 pieces in a row.  Secondary goal is to prevent opponent from winning.
-CURRENT PLAYER: ?
-
-TASK: Analyze the board to deturmine next strategic to ensure winning the game.
-
-OUTPUT: Respond only with column number of the next move.
+GOAL:  Goal is to win and not lose
+PLAYER: You are player ?
+TASK: Examine the board state and strategically decide your next move. Then Briefly, in 1 sentence, explain your reasoning. 
+OUTPUT: Submit your move in the format 'COL:#', where '#' is the column of your move (1-7).
 
 BOARD STATE BY COLUMN (bottom to top):
