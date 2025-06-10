@@ -7,6 +7,7 @@ from c4_common import NUMROWS, NUMCOLS
 #OLLAMA_MODEL       = 'llama3.2:3b'
 OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
+#OLLAMA_MODEL        = 'mistral:7b'
 
 
 
@@ -82,7 +83,7 @@ def generate_prompt(game_board, current_player):
     
     # Update current player in base prompt
     current_player_symbol = "X" if current_player == 0 else "O"
-    base_prompt = base_prompt.replace("?", f"{current_player_symbol}")
+    base_prompt = base_prompt.replace("?", f"{current_player_symbol} (Player{current_player + 1})" )
     
     # Combine base prompt with board state
     final_prompt = base_prompt + "\n" + board_state
@@ -138,13 +139,24 @@ def call_ollama_api(prompt):
 
 def parse_ai_response(response):
 
-    # Find all numbers 1-7 in the response
-    numbers = re.findall(r'[1-7]', response)
+    # Response should be in the format:  
+    #      { "col":#, "reason":"'your reason'"}
+
+    # Use regex to find "col": followed by a number 1-7
+    match = re.search(r'"col"\s*:\s*([1-7])', response)
     
-    if numbers:
-        # Take the last valid number found and convert to 0-based index
-        column_1_based = int(numbers[-1])
-        return column_1_based - 1
+    if match:
+        column_1_based = int(match.group(1))
+        return column_1_based - 1  # Convert to 0-based index
+    
+    # Legacy fallback????
+    # # Find all numbers 1-7 in the response
+    # numbers = re.findall(r'[1-7]', response)
+    
+    # if numbers:
+    #     # Take the last valid number found and convert to 0-based index
+    #     column_1_based = int(numbers[-1])
+    #     return column_1_based - 1
     
     # If no valid column found, raise an exception
     raise ValueError(f"Could not find valid column [1-7] in AI response: '{response}'")

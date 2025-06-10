@@ -93,6 +93,9 @@ def RunGame( disp ):
             print("Winner!!!", col, row)
             print(winner)
 
+            #Set bottom text to winner
+            disp.text_set(5,63, player_color[player],  player_name[select_mode[player]]+ " Wins")
+
             BlinkWinningChips(disp,winner,player)
 
             # Hold winning chips for a bit
