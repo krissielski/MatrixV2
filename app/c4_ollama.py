@@ -8,6 +8,7 @@ from c4_common import NUMROWS, NUMCOLS
 OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
 #OLLAMA_MODEL        = 'mistral:7b'
+#OLLAMA_MODEL        = 'hermes3:8b'
 
 
 
