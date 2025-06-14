@@ -46,7 +46,11 @@ class Display:
                 self.canvas.SetPixel(x, y, r, g, b)
 
     def clear(self):
-        self.background( (0,0,0) )          
+        self.background( (0,0,0) )       
+
+    def set_pixel(self, x, y, r, g, b):
+        self.canvas.SetPixel(x, y, r, g, b)
+
 
     def draw_square(self, x, y, size, color):
         r, g, b = color
