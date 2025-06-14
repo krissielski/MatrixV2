@@ -4,8 +4,8 @@ import re
 from c4_common import NUMROWS, NUMCOLS
 
 # Configuration constants
-#OLLAMA_MODEL       = 'llama3.2:3b'
-OLLAMA_MODEL       = 'llama3:8b'
+OLLAMA_MODEL       = 'llama3.2:3b'
+#OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
 #OLLAMA_MODEL        = 'mistral:7b'
 #OLLAMA_MODEL        = 'hermes3:8b'
@@ -24,6 +24,9 @@ OLLAMA_TOP_P = 0.9          # Nucleus sampling parameter (controls diversity)
 OLLAMA_TOP_K = 10           # Limits the number of highest probability tokens to consider
 
 
+#Output Prompt to a file
+OLLAMA_OUTPUT_FILE   = 'logs/outputprompt.txt'
+OLLAMA_OUTPUT_ENABLE = 1    # 1=Enable, 0=Disable
 
 def GetOllamaMove(game_board, current_player):
 
@@ -78,10 +81,6 @@ def generate_prompt(game_board, current_player):
         column_state += ", ".join(row_states)
         board_state += column_state + "\n"
     
-    # # Debug print for board state
-    # print("Generated board state for AI:")
-    # print(board_state)
-    
     # Update current player in base prompt
     current_player_symbol = "X" if current_player == 0 else "O"
     base_prompt = base_prompt.replace("?", f"{current_player_symbol} (Player{current_player + 1})" )
@@ -89,9 +88,11 @@ def generate_prompt(game_board, current_player):
     # Combine base prompt with board state
     final_prompt = base_prompt + "\n" + board_state
 
-    # # Debug print for board state
-    # print("Generated prompt AI:")
-    # print(final_prompt)
+    # Output final prompt to file
+    if OLLAMA_OUTPUT_ENABLE == 1:
+        with open(OLLAMA_OUTPUT_FILE, 'w') as f:
+            f.write(final_prompt)
+
     
     return final_prompt
 
@@ -126,7 +127,7 @@ def call_ollama_api(prompt):
         # print("Ollama Full Response:", result)
         # print()
         print("Ollama Model:    ",OLLAMA_MODEL)
-        print("Ollama Duration: ",result.get("total_duration", "")/1000000000)
+        print("Ollama Duration: ",int(result.get("total_duration", "")/1000000000))
         print("Ollama Response: ",result.get("response", "").strip())
         # print("-------------------")
 

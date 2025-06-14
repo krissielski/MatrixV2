@@ -9,5 +9,8 @@ __pycache__/
 #Font libraries
 *.bdf
 
+#Logs
+/app/logs 
+
 
 
