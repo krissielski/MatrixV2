@@ -4,11 +4,11 @@ import re
 from c4_common import NUMROWS, NUMCOLS
 
 # Configuration constants
-OLLAMA_MODEL       = 'llama3.2:3b'
-#OLLAMA_MODEL       = 'llama3:8b'
+#OLLAMA_MODEL       = 'llama3.2:3b'
+OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
-#OLLAMA_MODEL        = 'mistral:7b'
-#OLLAMA_MODEL        = 'hermes3:8b'
+#OLLAMA_MODEL       = 'mistral:7b'
+#OLLAMA_MODEL       = 'hermes3:8b'
 
 
 
@@ -21,7 +21,7 @@ OLLAMA_TIMEOUT     = (15*60)      #Request Timeout (seconds)
 # AI generation parameters
 OLLAMA_TEMPERATURE = 0.1    # Controls randomness (0.0 = very deterministic, 1.0 = very random)
 OLLAMA_TOP_P = 0.9          # Nucleus sampling parameter (controls diversity)
-OLLAMA_TOP_K = 10           # Limits the number of highest probability tokens to consider
+OLLAMA_TOP_K = 20           # Limits the number of highest probability tokens to consider
 
 
 #Output Prompt to a file

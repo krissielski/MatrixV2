@@ -6,7 +6,7 @@ PIECES: X=Player1, O=Player2, empty=Empty Cell
 OBJECTIVE: Win by connecting 4 of your pieces in a consecutive line (vertical, horizontal, or diagonal) before your opponent does
 GRAVITY: Pieces fall to the lowest empty row in a column (Row1 is the lowest Row (bottom))
 PLAYER: You are player ?
-TASK: Analyze the board state and deturmine your next strategic move. 
+TASK: Analyze the board state and determine your next strategic move. 
 OUTPUT: Your move submission MUST be JSON with this exact format: { "col":# } 
 
 BOARD STATE BY COLUMN (bottom to top):
