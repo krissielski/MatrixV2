@@ -75,6 +75,108 @@ class Display:
                     if 0 <= px < self.width and 0 <= py < self.height:
                         self.canvas.SetPixel(px, py, r, g, b)
     
+
+    def draw_o(self, cx, cy, outer_radius, width, color):
+        """
+        Draw an 'O' shape - a circle with a hollow center
+        
+        Args:
+            cx, cy: Center coordinates
+            outer_radius: Outer radius of the O
+            width: Width of the ring/stroke
+            color: RGB color tuple
+        """
+        inner_radius = outer_radius - width
+        r, g, b = color
+        for y in range(-outer_radius, outer_radius + 1):
+            for x in range(-outer_radius, outer_radius + 1):
+                distance_squared = x*x + y*y
+                # Check if point is within outer circle but outside inner circle
+                if (distance_squared < outer_radius*outer_radius and 
+                    distance_squared >= inner_radius*inner_radius):
+                    px, py = cx + x, cy + y
+                    if 0 <= px < self.width and 0 <= py < self.height:
+                        self.canvas.SetPixel(px, py, r, g, b)
+
+    def draw_line(self, x1, y1, x2, y2, color):
+        """
+        Draw a line between two points using Bresenham's line algorithm
+        
+        Args:
+            x1, y1: Starting point coordinates
+            x2, y2: Ending point coordinates
+            color: RGB color tuple
+        """
+        r, g, b = color
+        
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        x, y = x1, y1
+        
+        # Determine direction of line
+        x_inc = 1 if x1 < x2 else -1
+        y_inc = 1 if y1 < y2 else -1
+        
+        # Bresenham's algorithm
+        if dx > dy:
+            # Line is more horizontal than vertical
+            error = dx / 2
+            while x != x2:
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    self.canvas.SetPixel(x, y, r, g, b)
+                error -= dy
+                if error < 0:
+                    y += y_inc
+                    error += dx
+                x += x_inc
+        else:
+            # Line is more vertical than horizontal
+            error = dy / 2
+            while y != y2:
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    self.canvas.SetPixel(x, y, r, g, b)
+                error -= dx
+                if error < 0:
+                    x += x_inc
+                    error += dy
+                y += y_inc
+        
+    def draw_x(self, center_x, center_y, height, line_width, color):
+        """
+        Draw an 'X' shape using two diagonal lines
+        
+        Args:
+            center_x, center_y: Center coordinates of the X
+            height: Height (and width) of the X
+            line_width: Width of each line stroke
+            color: RGB color tuple
+        """
+        half_up = height // 2
+        half_down = height - half_up + 1  # Add 1 to account for center pixel
+        
+        # Calculate the four corner points
+        x1, y1 = center_x - half_up, center_y - half_up      # Top-left
+        x2, y2 = center_x + half_down, center_y + half_down  # Bottom-right
+        x3, y3 = center_x + half_down, center_y - half_up    # Top-right
+        x4, y4 = center_x - half_up, center_y + half_down    # Bottom-left
+    
+        
+        # Draw multiple parallel lines to create line width
+        for i in range(line_width):
+            offset = i - line_width // 2
+            
+            # First diagonal: top-left to bottom-right
+            self.draw_line(x1 + offset, y1, x2 + offset, y2, color)
+            self.draw_line(x1, y1 + offset, x2, y2 + offset, color)
+            
+            # Second diagonal: top-right to bottom-left  
+            self.draw_line(x3 - offset, y3, x4 - offset, y4, color)
+            self.draw_line(x3, y3 + offset, x4, y4 + offset, color)
+
+
+
+
+
     # ---- Text ----
     def text_set(self,x,y,color,text):
         r, g, b = color
@@ -85,6 +187,9 @@ class Display:
     def text_render(self):
         x,y = self.font_pos
         graphics.DrawText(self.canvas, self.font, x,y, self.font_color, self.font_text)
+
+    def text_loadFont(self,fontname):
+        self.font.LoadFont("fonts/"+fontname)
 
 
     # ---- Overlay drawing ----

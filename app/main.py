@@ -1,6 +1,7 @@
 from display import Display
 from c4_game import RunGame
 from starfield import RunStarfield
+from ttt_game import ttt_RunGame
 import time
 
 disp = Display()
@@ -10,10 +11,11 @@ disp.clear()
 #disp.draw_circle(45, 30, 10, (0, 255, 0))
 
 
-RunGame(disp)
+#RunGame(disp)
 #RunStarfield(disp)
+ttt_RunGame(disp)
 
 
 
 #disp.show()
-time.sleep(7)
+#time.sleep(7)
