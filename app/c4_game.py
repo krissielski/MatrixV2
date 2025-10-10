@@ -99,11 +99,11 @@ def RunGame( disp ):
             BlinkWinningChips(disp,winner,player)
 
             # Hold winning chips for a bit
-            time.sleep(5)
+            time.sleep(10)
 
-            #Stall for now
-            while True:
-                time.sleep(1)
+            # #Stall for now
+            # while True:
+            #     time.sleep(1)
 
             # Reset for next game
             player = 0

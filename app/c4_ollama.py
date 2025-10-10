@@ -4,15 +4,17 @@ import re
 from c4_common import NUMROWS, NUMCOLS
 
 # Configuration constants
-#OLLAMA_MODEL       = 'llama3.2:3b'
-OLLAMA_MODEL       = 'llama3:8b'
+#OLLAMA_MODEL       = 'llama3.1:8b'
+#OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
 #OLLAMA_MODEL       = 'mistral:7b'
 #OLLAMA_MODEL       = 'hermes3:8b'
+#OLLAMA_MODEL       = 'cogito:8b'
+#OLLAMA_MODEL       = 'gemma2:9b'
+OLLAMA_MODEL       = 'qwen2.5:7b'
 
 
-
-OLLAMA_HOST        = 'http://192.168.3.50:11434'
+OLLAMA_HOST        = 'http://192.168.3.10:11434'
 OLLAMA_PROMPT_FILE = 'c4_ollama_prompt.txt'
 
 OLLAMA_TIMEOUT     = (15*60)      #Request Timeout (seconds)      
