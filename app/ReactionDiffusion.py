@@ -34,7 +34,7 @@ KILL_RATE = 0.062      # Kill rate: how fast B is removed (0.045-0.07)
                        #      (0.035, 0.065) for waves
 
 # Simulation speed
-TIME_STEP = 1.0        # Time step per frame (0.5-2.0, higher = faster evolution)
+TIME_STEP = 1.05      # Time step per frame (0.5-2.0, higher = faster evolution)
 
 # Color settings
 BACKGROUND_COLOR = (0, 0, 0)      # RGB for background (low B concentration)
@@ -80,7 +80,7 @@ class ReactionDiffusion:
         self.frame_count = 0
         self.current_pattern = 0
         self.pattern_types = [
-            'random_noise',
+#           'random_noise',
             'central_spot',
             'multiple_dots',
             'stripes_horizontal',
