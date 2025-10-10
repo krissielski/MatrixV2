@@ -17,6 +17,12 @@ class Display:
         options.chain_length = 1
         options.parallel = 1
 
+        #No need for a high refresh rate 
+        options.pwm_lsb_nanoseconds = 200
+        #options.pwm_dither_bits = 0
+        #options.pwm_bits = 7
+
+
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
         self.width = self.canvas.width
