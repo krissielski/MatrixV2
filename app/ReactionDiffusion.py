@@ -44,6 +44,19 @@ BRIGHTNESS = 200                    # Max brightness for patterns (0-255)
 FRAMES_PER_PATTERN = 700  # Frames before switching to new seed pattern
 
 # ============================================================================
+# GLOBAL PATTERN TRACKING
+# ============================================================================
+PATTERN_TYPES = [
+    'random_noise',
+    'central_spot',
+    'multiple_dots',
+    'worms',
+    'waves',
+    'spiral'
+]
+CURRENT_PATTERN_INDEX = 0  # Track pattern across multiple RunReactionDiffusion calls
+
+# ============================================================================
 
 
 class ReactionDiffusion:
@@ -75,22 +88,11 @@ class ReactionDiffusion:
         # This eliminates expensive trig and conditional operations per pixel
         self._build_color_lut()
         
-        # Frame counter and pattern list
+        # Frame counter (pattern list is now global)
         self.frame_count = 0
-        self.current_pattern = 0
-        self.pattern_types = [
-            'random_noise',
-            'central_spot',
-            'multiple_dots',
-            'worms',
-#            'ring',
-#            'corners',
-            'waves',
-            'spiral'
-        ]
         
-        # Initialize with first pattern
-        self._seed_pattern(self.pattern_types[0])
+        # Initialize with a blank state (pattern will be set in RunReactionDiffusion)
+        self._seed_pattern(PATTERN_TYPES[0])
     
     def _build_color_lut(self):
         """
@@ -269,14 +271,6 @@ class ReactionDiffusion:
         Update the reaction-diffusion system for one time step.
         Uses vectorized operations for performance.
         """
-        # Check if it's time to change pattern
-        self.frame_count += 1
-        if self.frame_count >= FRAMES_PER_PATTERN:
-            self.frame_count = 0
-            self.current_pattern = (self.current_pattern + 1) % len(self.pattern_types)
-            self._seed_pattern(self.pattern_types[self.current_pattern])
-            print(f"Switching to pattern: {self.pattern_types[self.current_pattern]}")
-        
         # Compute Laplacians (diffusion)
         laplacian_A = self._laplacian_fast(self.A)
         laplacian_B = self._laplacian_fast(self.B)
@@ -339,16 +333,23 @@ class ReactionDiffusion:
 def RunReactionDiffusion(disp):
     """
     Run one reaction-diffusion pattern, then return.
-    Increments the pattern number for the next call.
+    Pattern is selected at the START of each call.
     
     Args:
         disp: Display object with clear(), set_pixel(), and show() methods
     """
+    global CURRENT_PATTERN_INDEX
+    
     print("Running Reaction-Diffusion")
     
-    # Use a global or class-level pattern index if you want persistence
-    # For now, we'll create a fresh instance each time
+    # Update to next pattern at the start
+    CURRENT_PATTERN_INDEX = (CURRENT_PATTERN_INDEX + 1) % len(PATTERN_TYPES)
+    pattern_name = PATTERN_TYPES[CURRENT_PATTERN_INDEX]
+    print(f"  Running pattern: {pattern_name}")
+    
+    # Create instance and seed with the selected pattern
     rd = ReactionDiffusion(disp.width, disp.height)
+    rd._seed_pattern(pattern_name)
     
     frame_count = 0
     start_time = time.time()
@@ -373,14 +374,13 @@ def RunReactionDiffusion(disp):
         
         # Performance monitoring (every 100 frames)
         frame_count += 1
-        if frame_count % 100 == 0:
-            elapsed = time.time() - start_time
-            fps = 100 / elapsed
-            print(f"FPS: {fps:.2f}")
-            start_time = time.time()
+        # if frame_count % 100 == 0:
+        #     elapsed = time.time() - start_time
+        #     fps = 100 / elapsed
+        #     print(f"FPS: {fps:.2f}")
+        #     start_time = time.time()
         
         # Small delay to prevent maxing out CPU
         time.sleep(0.001)
     
-    print("Reaction-Diffusion pattern complete")
     return
