@@ -34,15 +34,14 @@ KILL_RATE = 0.062      # Kill rate: how fast B is removed (0.045-0.07)
                        #      (0.035, 0.065) for waves
 
 # Simulation speed
-TIME_STEP = 1.05      # Time step per frame (0.5-2.0, higher = faster evolution)
-
+TIME_STEP = 0.9      # Time step per frame (0.5-2.0, higher = faster evolution)
 # Color settings
 BACKGROUND_COLOR = (0, 0, 0)      # RGB for background (low B concentration)
 COLOR_CYCLE_SPEED = 0.005           # Speed of color hue rotation (0.001-0.01)
 BRIGHTNESS = 200                    # Max brightness for patterns (0-255)
 
 # Pattern change settings
-FRAMES_PER_PATTERN = 1500  # Frames before switching to new seed pattern
+FRAMES_PER_PATTERN = 700  # Frames before switching to new seed pattern
 
 # ============================================================================
 
@@ -80,15 +79,14 @@ class ReactionDiffusion:
         self.frame_count = 0
         self.current_pattern = 0
         self.pattern_types = [
-#           'random_noise',
+            'random_noise',
             'central_spot',
             'multiple_dots',
-            'stripes_horizontal',
-            'stripes_vertical',
-            'diagonal',
             'worms',
-            'ring',
-            'corners'
+#            'ring',
+#            'corners',
+            'waves',
+            'spiral'
         ]
         
         # Initialize with first pattern
@@ -154,12 +152,18 @@ class ReactionDiffusion:
             # Random scattered points
             noise_mask = np.random.rand(h, w) > 0.90
             self.B[noise_mask] = 1.0
+
+            FEED_RATE = 0.062
+            KILL_RATE = 0.061
             
         elif pattern_type == 'central_spot':
             # Single large spot in center
             y, x = np.ogrid[:h, :w]
             dist = np.sqrt((x - cx)**2 + (y - cy)**2)
             self.B[dist < 8] = 1.0
+
+            FEED_RATE = 0.055
+            KILL_RATE = 0.062
             
         elif pattern_type == 'multiple_dots':
             # Several random spots
@@ -169,27 +173,10 @@ class ReactionDiffusion:
                 y, x = np.ogrid[:h, :w]
                 dist = np.sqrt((x - cx - dx)**2 + (y - cy - dy)**2)
                 self.B[dist < random.randint(2, 5)] = 1.0
+
+            FEED_RATE = 0.055
+            KILL_RATE = 0.062    
                 
-        elif pattern_type == 'stripes_horizontal':
-            # Horizontal stripes
-            for y in range(0, h, 8):
-                if y < h:
-                    self.B[y:min(y+3, h), :] = 1.0
-                    
-        elif pattern_type == 'stripes_vertical':
-            # Vertical stripes
-            for x in range(0, w, 8):
-                if x < w:
-                    self.B[:, x:min(x+3, w)] = 1.0
-                    
-        elif pattern_type == 'diagonal':
-            # Diagonal stripes
-            for i in range(-h, w, 10):
-                for offset in range(3):
-                    for y in range(h):
-                        x = i + y + offset
-                        if 0 <= x < w:
-                            self.B[y, x] = 1.0
                             
         elif pattern_type == 'worms':
             # Random "worm" lines
@@ -206,6 +193,10 @@ class ReactionDiffusion:
                     if random.random() < 0.2:
                         dx = random.choice([-1, 0, 1])
                         dy = random.choice([-1, 0, 1])
+
+            FEED_RATE = 0.039
+            KILL_RATE = 0.058
+
                         
         elif pattern_type == 'ring':
             # Ring pattern
@@ -213,6 +204,9 @@ class ReactionDiffusion:
             dist = np.sqrt((x - cx)**2 + (y - cy)**2)
             self.B[(dist > 12) & (dist < 18)] = 1.0
             
+            FEED_RATE = 0.055
+            KILL_RATE = 0.062
+
         elif pattern_type == 'corners':
             # Spots in corners
             corner_size = 6
@@ -220,6 +214,30 @@ class ReactionDiffusion:
             self.B[0:corner_size, -corner_size:] = 1.0
             self.B[-corner_size:, 0:corner_size] = 1.0
             self.B[-corner_size:, -corner_size:] = 1.0
+
+        elif pattern_type == 'waves':
+            # Sine wave pattern
+            for x in range(w):
+                y_wave = int(cy + 10 * np.sin(x * 0.3))
+                if 0 <= y_wave < h:
+                    self.B[max(0, y_wave-1):min(h, y_wave+2), x] = 1.0
+
+            FEED_RATE = 0.035
+            KILL_RATE = 0.065     
+
+        elif pattern_type == 'spiral':
+            # Archimedean spiral
+            for angle_deg in range(0, 720, 3):
+                angle = np.radians(angle_deg)
+                radius = angle_deg / 40.0
+                sx = int(cx + radius * np.cos(angle))
+                sy = int(cy + radius * np.sin(angle))
+                if 0 <= sx < w and 0 <= sy < h:
+                    self.B[max(0, sy-1):min(h, sy+2), max(0, sx-1):min(w, sx+2)] = 1.0
+
+            FEED_RATE = 0.039
+            KILL_RATE = 0.058
+            
     
     def _laplacian_fast(self, grid):
         """
