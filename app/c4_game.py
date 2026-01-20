@@ -39,6 +39,7 @@ def RunGame( disp ):
 
     random.seed(time.time())
 
+    disp.text_loadFont('5x8.bdf')
     GenerateOverlay(disp)
 
     # Reset game board at start

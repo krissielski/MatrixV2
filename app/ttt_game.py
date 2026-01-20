@@ -72,6 +72,7 @@ def ttt_RunGame( disp ):
         elapsed = time.time() - start_time
         if elapsed >= RUNTIME_SECONDS:
             print(f"TTT runtime limit ({RUNTIME_SECONDS} seconds) reached after {game_count} games")
+            time.sleep(3.0)
             return
 
         game_count += 1
