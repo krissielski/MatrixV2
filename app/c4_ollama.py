@@ -4,14 +4,14 @@ import re
 from c4_common import NUMROWS, NUMCOLS
 
 # Configuration constants
-#OLLAMA_MODEL       = 'llama3.1:8b'
+OLLAMA_MODEL       = 'llama3.1:8b'
 #OLLAMA_MODEL       = 'llama3:8b'
 #OLLAMA_MODEL       = 'phi4:14b'
 #OLLAMA_MODEL       = 'mistral:7b'
 #OLLAMA_MODEL       = 'hermes3:8b'
 #OLLAMA_MODEL       = 'cogito:8b'
 #OLLAMA_MODEL       = 'gemma2:9b'
-OLLAMA_MODEL       = 'qwen2.5:7b'
+#OLLAMA_MODEL       = 'qwen2.5:7b-instruct-q5_K_M'
 
 
 OLLAMA_HOST        = 'http://192.168.3.10:11434'

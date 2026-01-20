@@ -2,6 +2,12 @@ from display import Display
 import time
 import random
 
+# ============================================================================
+# USER-ADJUSTABLE PARAMETERS
+# ============================================================================
+RUNTIME_SECONDS = 15  # How long the TTT games run (in seconds)
+# ============================================================================
+
 #Game Board
 # Usage:  game_board[col][row]
 #
@@ -44,19 +50,31 @@ brd_color  = (125,125,125)
 
 
 def ttt_RunGame( disp ):
+    """
+    Run multiple TicTacToe games for RUNTIME_SECONDS.
+    Games get progressively faster as time goes on.
+    """
 
     random.seed(time.time())
 
     sleep_time = 0.25
+    game_count = 0
 
     print("TTT GAME")
 
     disp.text_loadFont('8x13B.bdf')
     #disp.text_loadFont('9x15B.bdf')
 
+    start_time = time.time()
 
-    while(True):
+    while True:
+        # Check if runtime limit exceeded
+        elapsed = time.time() - start_time
+        if elapsed >= RUNTIME_SECONDS:
+            print(f"TTT runtime limit ({RUNTIME_SECONDS} seconds) reached after {game_count} games")
+            return
 
+        game_count += 1
         whos_turn = 0  #0=X, 1=O 
 
         Clear_Board()
@@ -87,14 +105,13 @@ def ttt_RunGame( disp ):
             disp.show()       
 
             if Check_For_Winner() != None:
-                print("WINNER")
-                time.sleep(10)
-                exit()
+                print(f"WINNER (Game {game_count})")
+                time.sleep(1)
+                break
 
 
             if Check_for_Draw():
-                print("DRAW!!")
-                #time.sleep(1)
+                print(f"DRAW!! (Game {game_count})")
                 if sleep_time > 0.005:
                     sleep_time *= 0.65
                 break

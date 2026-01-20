@@ -2,7 +2,11 @@ import random
 import math
 import time
 
-# Starfield class
+# ============================================================================
+# USER-ADJUSTABLE PARAMETERS
+# ============================================================================
+RUNTIME_SECONDS = 300  # How long the starfield runs (in seconds).
+# ============================================================================
 class StarField:
     def __init__(self, width=64, height=64, num_stars=100, speed=2.0):
         self.width = width
@@ -157,7 +161,7 @@ def RunStarfield(disp):
 
     starfield = StarField(disp.width, disp.height, num_stars=100, speed=2.0)
 
-    while(1):
+    while True:
         starfield.update()
 
         pixel_list = starfield.get_pixels()
@@ -168,7 +172,12 @@ def RunStarfield(disp):
         for x, y, r, g, b in pixel_list:
             disp.set_pixel(x,y,r,g,b)
 
-
         disp.show()
         time.sleep(.01)
+        
+        # Check if runtime limit exceeded
+        elapsed = time.time() - start_time
+        if elapsed >= RUNTIME_SECONDS:
+            print(f"Starfield runtime limit ({RUNTIME_SECONDS} seconds) reached")
+            return
 

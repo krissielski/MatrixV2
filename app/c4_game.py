@@ -41,7 +41,10 @@ def RunGame( disp ):
 
     GenerateOverlay(disp)
 
-
+    # Reset game board at start
+    for col in range(NUMCOLS):
+        for row in range(NUMROWS):
+            game_board[col][row] = None
 
     #Player 0 (RED), player 1 (Yellow)
     player = 0
@@ -67,7 +70,7 @@ def RunGame( disp ):
         if not CheckForValidMove( game_board, col, row ):
             print("  INVALID MOVE:", col, row, player)
             time.sleep(5)
-            exit() 
+            return
 
         DropChip(disp,col,row, player_color[player] )
 
@@ -80,10 +83,8 @@ def RunGame( disp ):
         if CheckForDraw(game_board):
             print("   DRAW!!!!!!!!!!!")
             time.sleep(5)
-
-            #Stall for now
-            while True:
-                time.sleep(1)
+            print("Connect4 game complete")
+            return
  
 
 
@@ -101,18 +102,8 @@ def RunGame( disp ):
             # Hold winning chips for a bit
             time.sleep(10)
 
-            # #Stall for now
-            # while True:
-            #     time.sleep(1)
-
-            # Reset for next game
-            player = 0
-            # Clear the game board
-            for col in range(NUMCOLS):
-                for row in range(NUMROWS):
-                    game_board[col][row] = None
-
-            continue
+            print("Connect4 game complete")
+            return
 
 
         #Prepare for NEXT turn

@@ -8,17 +8,33 @@ import time
 disp = Display()
 
 disp.clear()
-#disp.draw_square(5, 5, 10,   (255, 0, 0))
-#disp.draw_circle(45, 30, 10, (0, 255, 0))
+
+# Run games in an infinite loop
+# Each game runs until it completes, then the next game starts
+while True:
+
+    print("\n" + "="*50)
+    print("Starting Connect4")
+    print("="*50)
+    disp.reset()
+    RunGame(disp)  
 
 
-RunReactionDiffusion(disp)
+    print("\n" + "="*50)
+    print("Starting Reaction-Diffusion")
+    print("="*50)
+    disp.reset()
+    RunReactionDiffusion(disp)
+    
+    print("\n" + "="*50)
+    print("Starting Starfield")
+    print("="*50)
+    disp.reset()
+    RunStarfield(disp)
+    
+    print("\n" + "="*50)
+    print("Starting TicTacToe")
+    print("="*50)
+    disp.reset()
+    ttt_RunGame(disp)
 
-RunGame(disp)
-#RunStarfield(disp)
-#ttt_RunGame(disp)
-
-
-
-#disp.show()
-#time.sleep(7)

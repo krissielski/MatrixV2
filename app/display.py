@@ -52,7 +52,19 @@ class Display:
                 self.canvas.SetPixel(x, y, r, g, b)
 
     def clear(self):
-        self.background( (0,0,0) )       
+        self.background((0, 0, 0))   
+
+    def reset(self):
+        #Clear Everything!
+        self.background((0, 0, 0))
+        # Clear the overlay canvas
+        self.overlay = [[0 for _ in range(self.width)] for _ in range(self.height)]
+        self.overlay_type  = 1 
+        self.overlay_color = (0,0,0)
+        # Clear text
+        self.font_text = ""
+        self.font_pos = (0, 0)
+        self.font_color = graphics.Color(0, 0, 0)          
 
     def set_pixel(self, x, y, r, g, b):
         self.canvas.SetPixel(x, y, r, g, b)

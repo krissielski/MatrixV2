@@ -338,19 +338,23 @@ class ReactionDiffusion:
 
 def RunReactionDiffusion(disp):
     """
-    Main loop for running the reaction-diffusion visualization.
+    Run one reaction-diffusion pattern, then return.
+    Increments the pattern number for the next call.
     
     Args:
         disp: Display object with clear(), set_pixel(), and show() methods
     """
     print("Running Reaction-Diffusion")
     
+    # Use a global or class-level pattern index if you want persistence
+    # For now, we'll create a fresh instance each time
     rd = ReactionDiffusion(disp.width, disp.height)
     
     frame_count = 0
     start_time = time.time()
     
-    while True:
+    # Run until one pattern completes (FRAMES_PER_PATTERN frames)
+    while frame_count < FRAMES_PER_PATTERN:
         # Update simulation
         rd.update()
         
@@ -377,3 +381,6 @@ def RunReactionDiffusion(disp):
         
         # Small delay to prevent maxing out CPU
         time.sleep(0.001)
+    
+    print("Reaction-Diffusion pattern complete")
+    return
