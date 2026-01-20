@@ -28,7 +28,7 @@ OLLAMA_TOP_K = 20           # Limits the number of highest probability tokens to
 
 #Output Prompt to a file
 OLLAMA_OUTPUT_FILE   = 'logs/outputprompt.txt'
-OLLAMA_OUTPUT_ENABLE = 1    # 1=Enable, 0=Disable
+OLLAMA_OUTPUT_ENABLE = 0    # 1=Enable, 0=Disable
 
 def GetOllamaMove(game_board, current_player):
 

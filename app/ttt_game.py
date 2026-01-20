@@ -111,7 +111,7 @@ def ttt_RunGame( disp ):
 
 
             if Check_for_Draw():
-                print(f"DRAW!! (Game {game_count})")
+                #print(f"DRAW!! (Game {game_count})")
                 if sleep_time > 0.005:
                     sleep_time *= 0.65
                 break
