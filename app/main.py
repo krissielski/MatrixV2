@@ -3,6 +3,7 @@ from c4_game import RunGame
 from starfield import RunStarfield
 from ttt_game import ttt_RunGame
 from ReactionDiffusion import RunReactionDiffusion
+from gameoflife import RunGameOfLife
 import time
 
 disp = Display()
@@ -12,6 +13,10 @@ disp.clear()
 # Run games in an infinite loop
 # Each game runs until it completes, then the next game starts
 while True:
+
+    print("="*50)
+    disp.reset()
+    RunGameOfLife(disp)
 
     print("="*50)
     disp.reset()
