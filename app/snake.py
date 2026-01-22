@@ -88,15 +88,15 @@ class SnakeGame:
                 neighbors.append(new_pos)
         return neighbors
     
-    def _bfs_path_to_target(self, start, target, obstacles):
+    def _astar_path_to_target(self, start, target, avoid_positions):
         """
-        Optimized A* pathfinding with parent pointers and distance limit.
+        A* pathfinding with parent pointers and distance limit.
         Returns list of positions forming path, or empty list if no path exists.
         
         Args:
             start: Starting position (x, y)
             target: Target position (x, y)
-            obstacles: Set of positions to avoid
+            avoid_positions: Set of positions to avoid (walls, body, etc.)
         """
         if start == target:
             return [start]
@@ -142,7 +142,7 @@ class SnakeGame:
                 continue
             
             for neighbor in self._get_neighbors(current):
-                if neighbor in closed_set or neighbor in obstacles:
+                if neighbor in closed_set or neighbor in avoid_positions:
                     continue
                 
                 tentative_g = current_g + 1
@@ -177,104 +177,82 @@ class SnakeGame:
         
         return True
     
-    def _can_reach_tail_after_fruit(self, new_head_pos):
+    def _can_reach_tail_after_move(self, new_head_pos, will_eat_fruit=False):
         """
-        Check if there's a safe path from new_head_pos to current tail position
-        after eating fruit. This ensures snake won't trap itself.
+        Verify that snake won't trap itself after this move.
         
-        Used when verifying if it's safe to move toward fruit.
+        Args:
+            new_head_pos: The position the head will move to
+            will_eat_fruit: Whether this move eats the fruit (snake grows)
+        
+        Returns True if there's a safe path from new_head to tail after the move
         """
-        # After eating fruit, snake body = current body + new head
-        # We need to check if there's a path from new_head to tail,
-        # treating entire body (except tail) as obstacles
+        # Build the body configuration after the move
+        if will_eat_fruit:
+            # If eating fruit, snake grows - body stays intact with new head
+            temp_body = set(self.snake)
+            temp_body.add(new_head_pos)
+        else:
+            # If not eating, tail will move away - body is everything except current tail
+            temp_body = set(self.snake)
+            temp_body.discard(self.snake[-1])
+            temp_body.add(new_head_pos)
         
-        snake_body = set(self.snake)
-        snake_body.add(new_head_pos)
-        snake_body.discard(self.snake[-1])  # Exclude tail
+        # Remove tail from obstacles since we're checking if we can reach it
+        tail = self.snake[-1]
+        temp_body.discard(tail)
         
-        path = self._bfs_path_to_target(new_head_pos, self.snake[-1], snake_body)
+        # Can we reach tail from new_head_pos?
+        path = self._astar_path_to_target(new_head_pos, tail, temp_body)
         return len(path) > 0
     
-    def _find_safe_move_to_fruit(self):
+    def _find_best_move(self):
         """
-        Find next move toward fruit using BFS with safety verification.
+        Compute the best next move using intelligent A* pathfinding.
         
         Strategy:
-        1. Try to find path to fruit
-        2. For each step toward fruit, verify we won't trap ourselves
-        3. Only proceed if we can always reach the tail
-        4. Otherwise return None (fallback will handle)
+        1. Try to find safe path to fruit (verify won't trap)
+        2. If fruit unreachable, find safest move toward tail
+        3. If both fail, find move that maximizes distance to obstacles
+        
+        Returns next position to move to, or None if no safe move exists.
         """
         head = self.snake[0]
+        snake_body = set(self.snake)
+        snake_body.discard(self.snake[-1])  # Exclude tail from obstacles
         
-        # Build obstacles (snake body except tail)
-        obstacles = set(self.snake)
-        obstacles.discard(self.snake[-1])
+        # Strategy 1: Try to reach fruit
+        if self.fruit_pos:
+            path_to_fruit = self._astar_path_to_target(head, self.fruit_pos, snake_body)
+            
+            if path_to_fruit and len(path_to_fruit) >= 2:
+                next_pos = path_to_fruit[1]
+                
+                # Verify this move won't trap us (fruit will cause growth)
+                if self._can_reach_tail_after_move(next_pos, will_eat_fruit=True):
+                    return next_pos
         
-        # Try to find path to fruit
-        path = self._bfs_path_to_target(head, self.fruit_pos, obstacles)
-        
-        if not path or len(path) < 2:
-            return None
-        
-        # Next position would be path[1]
-        next_pos = path[1]
-        
-        # CRITICAL: Check if this move will allow us to eventually reach the tail
-        # This prevents trapping even on partial paths
-        # Simulate: head moves to next_pos, tail stays (will move on next iteration)
-        temp_snake = set(self.snake)
-        temp_snake.add(next_pos)  # Add new head
-        temp_snake.discard(self.snake[-1])  # Tail hasn't moved yet, but will
-        
-        # Can we reach tail from next_pos with this configuration?
+        # Strategy 2: Move toward tail as fallback (keeps snake alive)
         tail = self.snake[-1]
-        can_reach_tail = len(self._bfs_path_to_target(next_pos, tail, temp_snake)) > 0
+        path_to_tail = self._astar_path_to_target(head, tail, snake_body)
         
-        if not can_reach_tail:
-            return None
+        if path_to_tail and len(path_to_tail) >= 2:
+            next_pos = path_to_tail[1]
+            
+            # Verify this move is safe
+            if self._can_reach_tail_after_move(next_pos, will_eat_fruit=False):
+                return next_pos
         
-        # If we're actually eating fruit this move, verify that will be safe too
-        if next_pos == self.fruit_pos:
-            if not self._can_reach_tail_after_fruit(next_pos):
-                return None
-        
-        return next_pos
-    
-    def _find_safe_follow_tail_move(self):
-        """
-        Fallback: Try to follow tail to keep snake alive.
-        BFS path to tail while avoiding body (EXCLUDING tail, which will move).
-        """
-        head = self.snake[0]
-        tail = self.snake[-1]
-        
-        # CRITICAL FIX: Don't include tail as obstacle!
-        # The tail ALWAYS moves away, so it's not actually an obstacle.
-        # Treating it as one prevents valid escape paths.
-        obstacles = set(self.snake)
-        obstacles.discard(tail)  # Exclude tail from obstacles
-        
-        path = self._bfs_path_to_target(head, tail, obstacles)
-        
-        if path and len(path) >= 2:
-            return path[1]
-        
-        return None
-    
-    def _find_safest_move(self):
-        """
-        Last resort: Choose any safe move that maximizes distance to nearest obstacle.
-        """
-        head = self.snake[0]
+        # Strategy 3: Choose safest available move
         best_move = None
         best_distance = -1
         
-        snake_body = set(self.snake)
-        snake_body.discard(self.snake[-1])
-        
         for neighbor in self._get_neighbors(head):
             if neighbor not in snake_body and self._is_valid_position(neighbor):
+                # Verify we won't immediately trap ourselves
+                if not self._can_reach_tail_after_move(neighbor, will_eat_fruit=False):
+                    continue
+                
                 # Calculate minimum distance to any obstacle
                 min_distance = float('inf')
                 
@@ -295,36 +273,13 @@ class SnakeGame:
         
         return best_move
     
-    def compute_next_move(self):
-        """
-        Compute the best next move using strategy hierarchy:
-        1. Try safe path to fruit
-        2. Fallback to follow tail
-        3. Last resort: maximize distance to obstacles
-        
-        Returns next position to move to, or None if no safe move exists.
-        """
-        # Strategy 1: Safe path to fruit
-        move = self._find_safe_move_to_fruit()
-        if move is not None:
-            return move
-        
-        # Strategy 2: Follow tail
-        move = self._find_safe_follow_tail_move()
-        if move is not None:
-            return move
-        
-        # Strategy 3: Safest available move
-        move = self._find_safest_move()
-        return move
-    
     def update(self):
         """Update snake position, handle fruit eating, check game over"""
         if self.game_over or self.win:
             return
         
         # Compute next move
-        next_pos = self.compute_next_move()
+        next_pos = self._find_best_move()
         
         if next_pos is None:
             # No safe move available
