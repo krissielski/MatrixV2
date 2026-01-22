@@ -5,7 +5,7 @@ import time
 # USER-ADJUSTABLE PARAMETERS
 # ============================================================================
 RUNTIME_SECONDS = 200  # How long the game runs (in seconds). Default 300s
-FRAME_TIME_MS = 500    # Time between each generation update (in milliseconds). Default 500ms
+FRAME_TIME_MS = 200    # Time between each generation update (in milliseconds). Default 500ms
 STARTING_DENSITY = 0.2 # Initial population density (0.0 to 1.0). Default 0.3
 COLOR_CYCLE_SPEED = 0.005  # Speed of color hue rotation (0.001-0.01)
 # ============================================================================
@@ -126,8 +126,9 @@ class GameOfLife:
 def RunGameOfLife(disp, runtime_seconds=RUNTIME_SECONDS, frame_time_ms=FRAME_TIME_MS):
     """
     Run Conway's Game of Life
-
     """
+
+    print("Running Game Of Life")
     
     start_time = time.time()
     last_update_time = start_time
