@@ -90,7 +90,7 @@ class SnakeGame:
     
     def _astar_path_to_target(self, start, target, avoid_positions):
         """
-        A* pathfinding with parent pointers and distance limit.
+        A* pathfinding with proper open set management.
         Returns list of positions forming path, or empty list if no path exists.
         
         Args:
@@ -105,25 +105,29 @@ class SnakeGame:
             """Manhattan distance heuristic"""
             return abs(pos[0] - target[0]) + abs(pos[1] - target[1])
         
-        # Early exit if target unreachable due to distance
-        max_search_distance = max(self.width, self.height) * 2
-        if heuristic(start) > max_search_distance:
-            return []
+        # Allow searching the full board. On a 64x64 board with 5% obstacles,
+        # optimal paths often exceed 128 steps. Using board area is more realistic.
+        max_search_distance = self.width * self.height
         
         # Use parent pointers instead of storing full paths (major optimization)
         parent = {start: None}
         g_score = {start: 0}
         
         # Priority queue: (f_score, counter, position)
+        # Track which positions are in the open set to avoid duplicate processing
         counter = 0
         open_set = [(heuristic(start), counter, start)]
+        open_set_positions = {start}
         closed_set = set()
         
         while open_set:
             _, _, current = heapq.heappop(open_set)
             
+            # Skip if already processed
             if current in closed_set:
                 continue
+            
+            open_set_positions.discard(current)
             
             if current == target:
                 # Reconstruct path from parent pointers
@@ -137,10 +141,6 @@ class SnakeGame:
             closed_set.add(current)
             current_g = g_score[current]
             
-            # Prune: don't explore too far
-            if current_g > max_search_distance:
-                continue
-            
             for neighbor in self._get_neighbors(current):
                 if neighbor in closed_set or neighbor in avoid_positions:
                     continue
@@ -153,7 +153,9 @@ class SnakeGame:
                     parent[neighbor] = current
                     counter += 1
                     f_score = tentative_g + heuristic(neighbor)
+                    # Add to open set (old duplicates will be skipped when popped)
                     heapq.heappush(open_set, (f_score, counter, neighbor))
+                    open_set_positions.add(neighbor)
         
         return []  # No path found
     
@@ -179,7 +181,8 @@ class SnakeGame:
     
     def _can_reach_tail_after_move(self, new_head_pos, will_eat_fruit=False):
         """
-        Verify that snake won't trap itself after this move.
+        Verify that snake won't trap itself after this move by checking if there's
+        a path from new head to tail after accounting for the move.
         
         Args:
             new_head_pos: The position the head will move to
@@ -187,89 +190,108 @@ class SnakeGame:
         
         Returns True if there's a safe path from new_head to tail after the move
         """
-        # Build the body configuration after the move
-        if will_eat_fruit:
-            # If eating fruit, snake grows - body stays intact with new head
-            temp_body = set(self.snake)
-            temp_body.add(new_head_pos)
-        else:
-            # If not eating, tail will move away - body is everything except current tail
-            temp_body = set(self.snake)
-            temp_body.discard(self.snake[-1])
-            temp_body.add(new_head_pos)
-        
-        # Remove tail from obstacles since we're checking if we can reach it
         tail = self.snake[-1]
-        temp_body.discard(tail)
         
-        # Can we reach tail from new_head_pos?
-        path = self._astar_path_to_target(new_head_pos, tail, temp_body)
-        return len(path) > 0
+        if will_eat_fruit:
+            # If eating fruit, snake grows - don't include new_head_pos as obstacle
+            # since it's our starting point. Just avoid the current body (minus tail).
+            obstacles_for_search = set(self.snake)
+            obstacles_for_search.discard(tail)
+        else:
+            # If not eating, tail moves away naturally.
+            # After the move, we need to verify there's space to maneuver.
+            # Obstacles are: old body without the tail (since tail will pop)
+            snake_list = list(self.snake)
+            obstacles_for_search = set(snake_list[:-1])
+        
+        # Can we reach the tail position from new_head_pos?
+        path = self._astar_path_to_target(new_head_pos, tail, obstacles_for_search)
+        return len(path) >= 1
     
     def _find_best_move(self):
         """
         Compute the best next move using intelligent A* pathfinding.
         
         Strategy:
-        1. Try to find safe path to fruit (verify won't trap)
-        2. If fruit unreachable, find safest move toward tail
-        3. If both fail, find move that maximizes distance to obstacles
+        1. Try to find safe path to fruit (avoid entire body including tail)
+        2. If fruit unreachable, relax constraints and make any safe move to wait
+        3. If fruit reachable, find safest move toward tail as fallback
+        4. If all else fails, find move that maximizes distance to obstacles
         
         Returns next position to move to, or None if no safe move exists.
         """
         head = self.snake[0]
-        snake_body = set(self.snake)
-        snake_body.discard(self.snake[-1])  # Exclude tail from obstacles
+        tail = self.snake[-1]
+        snake_list = list(self.snake)
+        snake_body_obstacles = set(snake_list[:-1])
         
         # Strategy 1: Try to reach fruit
+        # Include entire body (including tail) as obstacles to avoid paths
+        # that would loop back through the snake
+        fruit_reachable = False
         if self.fruit_pos:
-            path_to_fruit = self._astar_path_to_target(head, self.fruit_pos, snake_body)
+            fruit_obstacles = set(self.snake)
+            path_to_fruit = self._astar_path_to_target(head, self.fruit_pos, fruit_obstacles)
             
             if path_to_fruit and len(path_to_fruit) >= 2:
                 next_pos = path_to_fruit[1]
                 
                 # Verify this move won't trap us (fruit will cause growth)
                 if self._can_reach_tail_after_move(next_pos, will_eat_fruit=True):
+                    fruit_reachable = True  # Only mark reachable if trap check passes
                     return next_pos
         
-        # Strategy 2: Move toward tail as fallback (keeps snake alive)
-        tail = self.snake[-1]
-        path_to_tail = self._astar_path_to_target(head, tail, snake_body)
+        # Strategy 2: If fruit is unreachable/blocked, just make a safe move to wait
+        # Don't require trap checking - we're just waiting for the fruit to become accessible
+        if not fruit_reachable:
+            # Find any valid neighbor move without strict trap requirements
+            for neighbor in self._get_neighbors(head):
+                if neighbor in snake_body_obstacles or not self._is_valid_position(neighbor):
+                    continue
+                # This move is safe (doesn't collide), good enough when waiting for fruit
+                return neighbor
+        
+        # Strategy 3: Move toward tail as fallback (only if fruit WAS reachable)
+        # Exclude tail from obstacles since it will move away
+        path_to_tail = self._astar_path_to_target(head, tail, snake_body_obstacles)
         
         if path_to_tail and len(path_to_tail) >= 2:
             next_pos = path_to_tail[1]
             
-            # Verify this move is safe
-            if self._can_reach_tail_after_move(next_pos, will_eat_fruit=False):
-                return next_pos
+            # Verify this move is safe and won't trap us
+            if self._is_valid_position(next_pos) and next_pos not in snake_body_obstacles:
+                if self._can_reach_tail_after_move(next_pos, will_eat_fruit=False):
+                    return next_pos
         
-        # Strategy 3: Choose safest available move
+        # Strategy 4: Choose safest available move that won't immediately trap us
         best_move = None
         best_distance = -1
         
         for neighbor in self._get_neighbors(head):
-            if neighbor not in snake_body and self._is_valid_position(neighbor):
-                # Verify we won't immediately trap ourselves
-                if not self._can_reach_tail_after_move(neighbor, will_eat_fruit=False):
-                    continue
-                
-                # Calculate minimum distance to any obstacle
-                min_distance = float('inf')
-                
-                # Distance to walls
-                x, y = neighbor
-                wall_distance = min(x, y, self.width - 1 - x, self.height - 1 - y)
-                min_distance = min(min_distance, wall_distance)
-                
-                # Distance to body
-                for body_part in snake_body:
-                    bx, by = body_part
-                    dist = abs(x - bx) + abs(y - by)  # Manhattan distance
-                    min_distance = min(min_distance, dist)
-                
-                if min_distance > best_distance:
-                    best_distance = min_distance
-                    best_move = neighbor
+            if neighbor in snake_body_obstacles or not self._is_valid_position(neighbor):
+                continue
+            
+            # Verify we won't trap ourselves with this move
+            if not self._can_reach_tail_after_move(neighbor, will_eat_fruit=False):
+                continue
+            
+            # Calculate minimum distance to any obstacle
+            min_distance = float('inf')
+            
+            # Distance to walls
+            x, y = neighbor
+            wall_distance = min(x, y, self.width - 1 - x, self.height - 1 - y)
+            min_distance = min(min_distance, wall_distance)
+            
+            # Distance to body
+            for body_part in snake_body_obstacles:
+                bx, by = body_part
+                dist = abs(x - bx) + abs(y - by)  # Manhattan distance
+                min_distance = min(min_distance, dist)
+            
+            if min_distance > best_distance:
+                best_distance = min_distance
+                best_move = neighbor
         
         return best_move
     
