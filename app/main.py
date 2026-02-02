@@ -5,6 +5,7 @@ from ttt_game import ttt_RunGame
 from ReactionDiffusion import RunReactionDiffusion
 from gameoflife import RunGameOfLife
 from snake import RunSnakeGame
+from matrix import RunMatrix
 import time
 
 disp = Display()
@@ -14,6 +15,10 @@ disp.clear()
 # Run games in an infinite loop
 # Each game runs until it completes, then the next game starts
 while True:
+
+    print("="*50)
+    disp.reset()
+    RunMatrix(disp)
 
     print("="*50)
     disp.reset()
