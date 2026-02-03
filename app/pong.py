@@ -264,23 +264,23 @@ class PongGame:
         """Return list of pixels to draw: [(x, y, r, g, b), ...]"""
         pixels = []
         
-        # Draw left paddle - cyan
+        # Draw left paddle - cyan (dimmed)
         for dx in range(PADDLE_WIDTH):
             for dy in range(PADDLE_HEIGHT):
                 x = int(self.left_paddle_x + dx)
                 y = int(self.left_paddle_y + dy)
                 if 0 <= x < self.width and 0 <= y < self.height:
-                    pixels.append((x, y, 0, 255, 255))
+                    pixels.append((x, y, 0, 127, 127))
         
-        # Draw right paddle - magenta
+        # Draw right paddle - magenta (dimmed)
         for dx in range(PADDLE_WIDTH):
             for dy in range(PADDLE_HEIGHT):
                 x = int(self.right_paddle_x + dx)
                 y = int(self.right_paddle_y + dy)
                 if 0 <= x < self.width and 0 <= y < self.height:
-                    pixels.append((x, y, 255, 0, 255))
+                    pixels.append((x, y, 127, 0, 127))
         
-        # Draw ball - white
+        # Draw ball - gray (dimmed white)
         ball_x = int(self.ball_x)
         ball_y = int(self.ball_y)
         if 0 <= ball_x < self.width and 0 <= ball_y < self.height:

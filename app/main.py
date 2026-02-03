@@ -7,6 +7,7 @@ from gameoflife import RunGameOfLife
 from snake import RunSnakeGame
 from matrix import RunMatrix
 from pong import RunPongGame
+from breakout import RunBreakoutGame
 import time
 
 disp = Display()
@@ -16,6 +17,10 @@ disp.clear()
 # Run games in an infinite loop
 # Each game runs until it completes, then the next game starts
 while True:
+
+    print("="*50)
+    disp.reset()
+    RunBreakoutGame(disp)
 
     print("="*50)
     disp.reset()
