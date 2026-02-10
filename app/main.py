@@ -8,6 +8,7 @@ from snake import RunSnakeGame
 from matrix import RunMatrix
 from pong import RunPongGame
 from breakout import RunBreakoutGame
+from maze import RunMazeGame
 import time
 
 disp = Display()
@@ -17,6 +18,10 @@ disp.clear()
 # Run games in an infinite loop
 # Each game runs until it completes, then the next game starts
 while True:
+
+    print("="*50)
+    disp.reset()
+    RunMazeGame(disp)
 
     print("="*50)
     disp.reset()
@@ -53,4 +58,5 @@ while True:
     print("="*50)
     disp.reset()
     ttt_RunGame(disp)
+
 
