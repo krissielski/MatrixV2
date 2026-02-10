@@ -50,7 +50,8 @@ def RunGame( disp ):
     #Player 0 (RED), player 1 (Yellow)
     player = 0
     turn   = 1
-    select_mode = [0,2]
+#    select_mode = [0,2] # random vs Ollama
+    select_mode = [0,0] # random vs random
 
     while True:
 
