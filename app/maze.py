@@ -5,7 +5,7 @@ import time
 # USER-ADJUSTABLE PARAMETERS
 # =========================================================================
 FRAME_TIME_MS = 100  # Time between frames (in milliseconds)
-RUNTIME_SECONDS = 60  # How long the game runs (in seconds)
+RUNTIME_SECONDS = 90 # How long the game runs (in seconds)
 # =========================================================================
 
 def generate_maze(width, height):

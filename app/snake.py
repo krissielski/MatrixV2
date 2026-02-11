@@ -102,12 +102,15 @@ class SnakeGame:
             return [start]
         
         def heuristic(pos):
-            """Manhattan distance heuristic"""
-            return abs(pos[0] - target[0]) + abs(pos[1] - target[1])
+            """Weighted Manhattan distance heuristic for faster suboptimal pathfinding.
+            Weight > 1 makes A* greedier, finding paths faster at cost of optimality.
+            This prevents pathfinding stalls on long snakes."""
+            manhattan = abs(pos[0] - target[0]) + abs(pos[1] - target[1])
+            return manhattan * 1.5  # 1.5x weight = 50% greedier, much faster convergence
         
         # Allow searching the full board. On a 64x64 board with 5% obstacles,
         # optimal paths often exceed 128 steps. Using board area is more realistic.
-        max_search_distance = self.width * self.height
+        max_nodes_explored = 4000
         
         # Use parent pointers instead of storing full paths (major optimization)
         parent = {start: None}
@@ -120,7 +123,7 @@ class SnakeGame:
         open_set_positions = {start}
         closed_set = set()
         
-        while open_set:
+        while open_set and len(closed_set) < max_nodes_explored:
             _, _, current = heapq.heappop(open_set)
             
             # Skip if already processed
@@ -193,16 +196,21 @@ class SnakeGame:
         tail = self.snake[-1]
         
         if will_eat_fruit:
-            # If eating fruit, snake grows - don't include new_head_pos as obstacle
-            # since it's our starting point. Just avoid the current body (minus tail).
+            # If eating fruit, snake grows - new_head_pos becomes part of body.
+            # Obstacles are: entire current body except the tail (which will become new_head)
+            # but we need to avoid the current body minus tail, plus the new head will be there
             obstacles_for_search = set(self.snake)
             obstacles_for_search.discard(tail)
+            # Remove new_head_pos if it's in obstacles (shouldn't be, but be safe)
+            obstacles_for_search.discard(new_head_pos)
         else:
-            # If not eating, tail moves away naturally.
-            # After the move, we need to verify there's space to maneuver.
-            # Obstacles are: old body without the tail (since tail will pop)
+            # If not eating, tail will pop after this move.
+            # State after move: head is at new_head_pos, body is snake[:-1], tail is gone.
+            # So obstacles should be: current body minus tail, PLUS new_head_pos (which becomes the new body)
+            # But we're searching FROM new_head_pos, so exclude it from obstacles.
             snake_list = list(self.snake)
             obstacles_for_search = set(snake_list[:-1])
+            # new_head_pos will become body, but exclude it since it's our search start
         
         # Can we reach the tail position from new_head_pos?
         path = self._astar_path_to_target(new_head_pos, tail, obstacles_for_search)
@@ -226,20 +234,19 @@ class SnakeGame:
         snake_body_obstacles = set(snake_list[:-1])
         
         # Strategy 1: Try to reach fruit
-        # Include entire body (including tail) as obstacles to avoid paths
-        # that would loop back through the snake
+        # Exclude the tail from obstacles since it will pop as snake moves (creating a tunnel).
+        # Include rest of body to avoid paths that would loop back through the snake.
         fruit_reachable = False
         if self.fruit_pos:
             fruit_obstacles = set(self.snake)
+            fruit_obstacles.discard(self.snake[-1])  # Exclude tail - it will move away
             path_to_fruit = self._astar_path_to_target(head, self.fruit_pos, fruit_obstacles)
             
             if path_to_fruit and len(path_to_fruit) >= 2:
                 next_pos = path_to_fruit[1]
-                
-                # Verify this move won't trap us (fruit will cause growth)
-                if self._can_reach_tail_after_move(next_pos, will_eat_fruit=True):
-                    fruit_reachable = True  # Only mark reachable if trap check passes
-                    return next_pos
+                # Trust the A* path - it found a route considering the snake body.
+                # No need for expensive trap-checking; the path itself is valid.
+                return next_pos
         
         # Strategy 2: If fruit is unreachable/blocked, just make a safe move to wait
         # Don't require trap checking - we're just waiting for the fruit to become accessible

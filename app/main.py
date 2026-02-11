@@ -21,6 +21,10 @@ while True:
 
     print("="*50)
     disp.reset()
+    RunSnakeGame(disp)
+
+    print("="*50)
+    disp.reset()
     RunMazeGame(disp)
 
     print("="*50)
@@ -31,13 +35,10 @@ while True:
     disp.reset()
     RunPongGame(disp)
 
-    print("="*50)
-    disp.reset()
-    RunMatrix(disp)
-
-    print("="*50)
-    disp.reset()
-    RunSnakeGame(disp)
+    # Eh, kinda dumb looking
+    # print("="*50)
+    # disp.reset()
+    # RunMatrix(disp)
 
     print("="*50)
     disp.reset()
