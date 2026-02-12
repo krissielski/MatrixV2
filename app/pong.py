@@ -9,7 +9,7 @@ BALL_SPEED = 1.5          # Initial ball speed (pixels per frame). Increase for 
 MAX_BALL_SPEED = 4.0      # Maximum ball speed (speeds up after paddle hits)
 PADDLE_HEIGHT = 10        # Height of each paddle in pixels
 PADDLE_WIDTH = 2          # Width of each paddle
-PADDLE_SPEED = 1.5        # Paddle movement speed (pixels per frame)
+PADDLE_SPEED = 2          # Paddle movement speed (pixels per frame)
 GAME_TIME_SECONDS = 120   # How long the game runs (in seconds)
 FRAME_TIME_MS = 50        # Time between frames (in milliseconds)
 WINNING_SCORE = 10        # First to N points wins (set to 0 to ignore score wins)
@@ -155,8 +155,12 @@ class PongGame:
                     hit_pos = self._clamp(hit_pos, 0, 1)
                     
                     # Ball hits top of paddle = upward angle, bottom = downward
-                    angle_factor = (hit_pos - 0.5) * 1.5
-                    self.ball_vy = self.ball_vy * 0.9 + angle_factor * BALL_SPEED
+                    angle_factor = (hit_pos - 0.5) * 1.2
+                    self.ball_vy = self.ball_vy + angle_factor * abs(self.ball_vx)
+                    
+                    # Cap vertical velocity to limit max angle (~37 degrees)
+                    max_vy = abs(self.ball_vx) * 0.75
+                    self.ball_vy = self._clamp(self.ball_vy, -max_vy, max_vy)
                     
                     # Speed up ball (up to max)
                     speed = math.sqrt(self.ball_vx ** 2 + self.ball_vy ** 2)
@@ -182,8 +186,13 @@ class PongGame:
                     hit_pos = (ball_y - self.right_paddle_y) / PADDLE_HEIGHT
                     hit_pos = self._clamp(hit_pos, 0, 1)
                     
-                    angle_factor = (hit_pos - 0.5) * 1.5
-                    self.ball_vy = self.ball_vy * 0.9 + angle_factor * BALL_SPEED
+                    # Ball hits top of paddle = upward angle, bottom = downward
+                    angle_factor = (hit_pos - 0.5) * 1.2
+                    self.ball_vy = self.ball_vy + angle_factor * abs(self.ball_vx)
+                    
+                    # Cap vertical velocity to limit max angle (~37 degrees)
+                    max_vy = abs(self.ball_vx) * 0.75
+                    self.ball_vy = self._clamp(self.ball_vy, -max_vy, max_vy)
                     
                     # Speed up ball
                     speed = math.sqrt(self.ball_vx ** 2 + self.ball_vy ** 2)
