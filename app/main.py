@@ -9,6 +9,7 @@ from matrix import RunMatrix
 from pong import RunPongGame
 from breakout import RunBreakoutGame
 from maze import RunMazeGame
+from fire import RunFire
 import time
 
 disp = Display()
@@ -18,6 +19,11 @@ disp.clear()
 # Run games in an infinite loop
 # Each game runs until it completes, then the next game starts
 while True:
+
+
+    print("="*50)
+    disp.reset()
+    RunFire(disp)
 
     print("="*50)
     disp.reset()
