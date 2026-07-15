@@ -9,6 +9,7 @@ from matrix import RunMatrix
 from pong import RunPongGame
 from breakout import RunBreakoutGame
 from maze import RunMazeGame
+from sort import RunSort
 from fire import RunFire
 import time
 
@@ -23,6 +24,13 @@ while True:
 
     print("="*50)
     disp.reset()
+    RunSort(disp)
+
+    continue
+
+
+    print("="*50)
+    disp.reset()
     RunFire(disp)
 
     print("="*50)
@@ -32,6 +40,8 @@ while True:
     print("="*50)
     disp.reset()
     RunMazeGame(disp)
+
+
 
     print("="*50)
     disp.reset()
