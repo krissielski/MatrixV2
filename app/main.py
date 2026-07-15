@@ -24,7 +24,9 @@ while True:
 
     print("="*50)
     disp.reset()
-    RunSort(disp)
+    RunBreakoutGame(disp)
+
+
 
     continue
 
@@ -42,10 +44,10 @@ while True:
     RunMazeGame(disp)
 
 
-
     print("="*50)
     disp.reset()
-    RunBreakoutGame(disp)
+    RunSort(disp)
+
 
     print("="*50)
     disp.reset()

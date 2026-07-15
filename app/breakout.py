@@ -14,10 +14,23 @@ PADDLE_Y = 60             # Y position of paddle from top
 GAME_TIME_SECONDS = 180   # How long the game runs (in seconds)
 FRAME_TIME_MS = 50        # Time between frames (in milliseconds)
 BRICK_ROWS = 5            # Number of brick rows
-BRICK_COLS = 8            # Number of brick columns
-BRICK_WIDTH = 8           # Width of each brick
+BRICK_COLS = 7            # Number of brick columns
+BRICK_WIDTH = 8           # Width of each brick (the rightmost column may be different — see below)
 BRICK_HEIGHT = 3          # Height of each brick
 BRICK_START_Y = 2         # Y position where bricks start
+BRICK_START_X = 1         # X position of the leftmost brick. With the default
+                           # parameters and a 64-wide screen, the layout is:
+                           # 1 empty column + 7 full bricks + 6 gaps + 1 empty column.
+BRICK_GAP = 1             # Pixels between adjacent bricks.
+BRICK_END_MARGIN = 1      # Pixels of empty space on the right side of the screen
+                           # after the rightmost brick. Mirrors BRICK_START_X for
+                           # symmetric margins. Set to 0 to fill the right edge.
+                           # The rightmost brick's width is computed to make the
+                           # math work out:
+                           #   rightmost_w = self.width - BRICK_END_MARGIN - x
+                           # With defaults (BRICK_COLS=7, BRICK_WIDTH=8, BRICK_GAP=1,
+                           # BRICK_START_X=1, BRICK_END_MARGIN=1) all 7 bricks are
+                           # exactly 8 px wide — no half-bricks on either side.
 # ============================================================================
 
 class BreakoutGame:
@@ -52,21 +65,38 @@ class BreakoutGame:
         self.ball_lost = False
     
     def _create_bricks(self):
-        """Create brick grid - fit bricks to screen width with gaps"""
+        """
+        Build the brick grid. The rightmost column has a variable width so
+        the layout can leave a configurable right margin (BRICK_END_MARGIN).
+
+        Math: starting at BRICK_START_X, lay down (BRICK_COLS - 1) full-width
+        bricks with BRICK_GAP between them. The rightmost brick's width is
+        whatever's left between its starting column and the right margin.
+
+        With default params (BRICK_COLS=7, BRICK_WIDTH=8, BRICK_GAP=1,
+        BRICK_START_X=1, BRICK_END_MARGIN=1) the rightmost column is also
+        8 px wide — a clean 7-brick grid with 1 empty column on each side.
+        """
         bricks = []
-        # Calculate spacing to fit all bricks on screen with 1-pixel gaps
-        gap = 1  # Visual separation between bricks
-        total_brick_width = BRICK_COLS * BRICK_WIDTH + (BRICK_COLS - 1) * gap
-        available_width = self.width - 2  # Leave 1 pixel margin on each side
-        
-        # Center the brick grid horizontally
-        brick_start_x = (self.width - total_brick_width) // 2
-        
         for row in range(BRICK_ROWS):
             for col in range(BRICK_COLS):
-                x = brick_start_x + col * (BRICK_WIDTH + gap)
+                x = BRICK_START_X + col * (BRICK_WIDTH + BRICK_GAP)
+                if col < BRICK_COLS - 1:
+                    # Normal-width brick.
+                    w = BRICK_WIDTH
+                else:
+                    # Rightmost column: extend to fill the space between
+                    # its starting column and the right margin (BRICK_END_MARGIN).
+                    # The math:
+                    #   rightmost_w = (self.width - BRICK_END_MARGIN) - x
+                    # If that comes out <= 0 the params are over-constrained;
+                    # fall back to BRICK_WIDTH so the rightmost is at least
+                    # visible (it'll be truncated, but not invisible).
+                    w = (self.width - BRICK_END_MARGIN) - x
+                    if w <= 0:
+                        w = BRICK_WIDTH
                 y = BRICK_START_Y + row * (BRICK_HEIGHT + 1)
-                bricks.append({'x': x, 'y': y, 'alive': True})
+                bricks.append({'x': x, 'y': y, 'w': w, 'alive': True})
         return bricks
     
     def _clamp(self, value, min_val, max_val):
@@ -169,7 +199,7 @@ class BreakoutGame:
             
             # Brick bounds
             brick_left = brick['x']
-            brick_right = brick['x'] + BRICK_WIDTH
+            brick_right = brick['x'] + brick['w']
             brick_top = brick['y']
             brick_bottom = brick['y'] + BRICK_HEIGHT
             
@@ -299,8 +329,8 @@ class BreakoutGame:
             
             row = (brick['y'] - BRICK_START_Y) // (BRICK_HEIGHT + 1)
             color = colors[row % len(colors)]
-            
-            for dx in range(BRICK_WIDTH):
+
+            for dx in range(brick['w']):
                 for dy in range(BRICK_HEIGHT):
                     x = int(brick['x'] + dx)
                     y = int(brick['y'] + dy)
@@ -320,10 +350,21 @@ def RunBreakoutGame(disp):
     """Main game loop for Breakout game"""
     print("Running Breakout Game")
     print(f"Game duration: {GAME_TIME_SECONDS} seconds")
-    
+    print(f"Brick layout: {BRICK_COLS} columns x {BRICK_ROWS} rows, "
+          f"brick_width={BRICK_WIDTH}, gap={BRICK_GAP}, "
+          f"start_x={BRICK_START_X}, end_margin={BRICK_END_MARGIN}")
+
     start_time = time.time()
     game = BreakoutGame(disp.width, disp.height)
-    
+
+    # Surface the rightmost column's actual width so the user can tell
+    # at a glance whether the layout is what they want. If the rightmost
+    # column is much smaller than BRICK_WIDTH, they probably want to
+    # reduce BRICK_GAP or BRICK_COLS.
+    rightmost_w = game.bricks[-1]['w'] if game.bricks else 0
+    print(f"Rightmost column width: {rightmost_w}px "
+          f"(normal is {BRICK_WIDTH}px)")
+
     next_turn_time = time.time() + (FRAME_TIME_MS / 1000.0)
     
     while True:
