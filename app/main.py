@@ -10,6 +10,7 @@ from pong import RunPongGame
 from breakout import RunBreakoutGame
 from maze import RunMazeGame
 from sort import RunSort
+from fishtank import RunFishTank
 from fire import RunFire
 import time
 
@@ -22,11 +23,10 @@ disp.clear()
 while True:
 
 
+
     print("="*50)
     disp.reset()
-    RunBreakoutGame(disp)
-
-
+    RunFishTank(disp)
 
     continue
 
@@ -42,6 +42,12 @@ while True:
     print("="*50)
     disp.reset()
     RunMazeGame(disp)
+
+
+
+    print("="*50)
+    disp.reset()
+    RunBreakoutGame(disp) 
 
 
     print("="*50)
